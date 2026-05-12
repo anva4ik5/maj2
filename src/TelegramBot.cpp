@@ -4,8 +4,6 @@
 #include <random>
 #include <thread>
 #include <chrono>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
@@ -20,7 +18,7 @@ void TelegramBot::initialize(const std::string& botToken, const std::string& adm
     this->botToken = botToken;
     this->adminID = adminID;
     
-    curl_global_init(CURL_GLOBAL_ALL);
+    // curl_global_init(CURL_GLOBAL_ALL); // Disabled
     
     std::cout << "TelegramBot initialized" << std::endl;
 }
@@ -193,7 +191,7 @@ std::string TelegramBot::generateKey() {
 }
 
 std::string TelegramBot::sendRequest(const std::string& endpoint, const std::string& jsonData) {
-    // Disabled for now - requires curl library
-    std::cout << "Sending request to: " << endpoint << std::endl;
+    // Disabled - requires curl library
+    std::cout << "Telegram API disabled - requires curl" << std::endl;
     return "";
 }
