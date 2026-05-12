@@ -46,6 +46,9 @@ public:
     
     bool isInitialized() const { return initialized; }
     
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
+    
 private:
     ID3D11Device* device;
     ID3D11DeviceContext* context;

@@ -152,7 +152,7 @@ bool AntiCheatBypass::isRemoteDebuggerPresent() {
 
 bool AntiCheatBypass::checkHardwareBreakpoints() {
     CONTEXT context;
-    context.ContextFlags = CONTEXT_DEBUG;
+    context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     
     if (GetThreadContext(GetCurrentThread(), &context)) {
         // Check for hardware breakpoints

@@ -44,7 +44,6 @@ private:
     
     std::vector<std::string> logs;
     
-    std::string getCurrentTime();
     std::string levelToString(LogLevel level);
 };
 
@@ -89,5 +88,7 @@ public:
 private:
     bool enabled;
     std::vector<std::string> events;
+    std::mutex mutex;
+};
     std::mutex mutex;
 };

@@ -215,7 +215,12 @@ void UIRenderer::renderTabs() {
             overlay->drawBox(currentTabPos, currentTabSize, accentColor, 2.0f);
         }
         
-        Color textColor = tabs[i].active ? {1, 1, 1, 1} : {0.7f, 0.7f, 0.7f, 1};
+        Color textColor;
+        if (tabs[i].active) {
+            textColor = Color(1, 1, 1, 1);
+        } else {
+            textColor = Color(0.7f, 0.7f, 0.7f, 1);
+        }
         textColor.a = menuAlpha;
         
         // Center text in tab

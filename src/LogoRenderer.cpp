@@ -74,7 +74,7 @@ void LogoRenderer::renderNeonBox(Vec2 position, Vec2 size) {
 void LogoRenderer::renderGlowEffect(Vec2 position, Vec2 size) {
     // Draw radial glow effect
     Vec2 center = {position.x + size.x / 2, position.y + size.y / 2};
-    float maxRadius = std::max(size.x, size.y) * 0.8f;
+    float maxRadius = (size.x > size.y ? size.x : size.y) * 0.8f;
     
     for (float radius = maxRadius; radius > 0; radius -= 10) {
         float alpha = (radius / maxRadius) * glowIntensity * 0.3f;

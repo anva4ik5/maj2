@@ -72,7 +72,7 @@ bool OBSBypass::isRecording() {
     if (!isOBSPresent()) return false;
     
     // Проверка через HWND (OBS Studio)
-    HWND obsWindow = FindWindow(L"Qt5QWindowIcon", L"OBS");
+    HWND obsWindow = FindWindowA("Qt5QWindowIcon", "OBS");
     if (obsWindow) {
         // Проверить заголовок окна на наличие "Recording"
         char title[256];
@@ -145,7 +145,7 @@ void OBSBypass::hideWindowFromCapture(HWND hwnd) {
     
     typedef BOOL (WINAPI *SetWindowDisplayAffinityFn)(HWND, DWORD);
     SetWindowDisplayAffinityFn pSetWindowDisplayAffinity = 
-        (SetWindowDisplayAffinityFn)GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowDisplayAffinity");
+        (SetWindowDisplayAffinityFn)GetProcAddress(GetModuleHandleA("user32.dll"), "SetWindowDisplayAffinity");
     
     if (pSetWindowDisplayAffinity) {
         // WDA_EXCLUDEFROMCAPTURE = 0x11
@@ -157,7 +157,7 @@ void OBSBypass::restoreWindowFromCapture(HWND hwnd) {
     // Восстановить окно для захвата
     typedef BOOL (WINAPI *SetWindowDisplayAffinityFn)(HWND, DWORD);
     SetWindowDisplayAffinityFn pSetWindowDisplayAffinity = 
-        (SetWindowDisplayAffinityFn)GetProcAddress(GetModuleHandle(L"user32.dll"), "SetWindowDisplayAffinity");
+        (SetWindowDisplayAffinityFn)GetProcAddress(GetModuleHandleA("user32.dll"), "SetWindowDisplayAffinity");
     
     if (pSetWindowDisplayAffinity) {
         // WDA_NONE = 0
