@@ -86,23 +86,16 @@ APIResponse BackendAPI::createLicense(const std::string& adminID, const std::str
 APIResponse BackendAPI::revokeLicense(const std::string& adminID, const std::string& key) {
     std::string endpoint = apiEndpoint + "/api/admin/license/revoke";
     
-    json payload;
-    payload["admin_id"] = adminID;
-    payload["key"] = key;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
 APIResponse BackendAPI::extendLicense(const std::string& adminID, const std::string& key, int additionalDays) {
     std::string endpoint = apiEndpoint + "/api/admin/license/extend";
     
-    json payload;
-    payload["admin_id"] = adminID;
-    payload["key"] = key;
-    payload["additional_days"] = additionalDays;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 

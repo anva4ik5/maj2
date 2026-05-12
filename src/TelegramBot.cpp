@@ -148,9 +148,9 @@ void TelegramBot::startPolling() {
                             }
                             
                             if (update.contains("callback_query")) {
-                                std::string callbackID = update["callback_query"]["id"];
-                                std::string callbackData = update["callback_query"]["data"];
-                                std::string chatID = update["callback_query"]["message"]["chat"]["id"];
+                                std::string callbackID = update["callback_query"]["id"].get<std::string>();
+                                std::string callbackData = update["callback_query"]["data"].get<std::string>();
+                                std::string chatID = update["callback_query"]["message"]["chat"]["id"].get<std::string>();
                                 
                                 if (callbackQueryCallback) {
                                     callbackQueryCallback(callbackID, callbackData);
