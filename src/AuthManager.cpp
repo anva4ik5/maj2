@@ -7,8 +7,6 @@
 #include <random>
 #include <regex>
 
-using json = nlohmann::json;
-
 AuthManager::AuthManager() 
     : authorized(false) {
 }
@@ -89,13 +87,7 @@ bool AuthManager::checkLicenseExpiry(const std::string& key) {
 }
 
 bool AuthManager::registerUser(const std::string& telegramID, const std::string& username) {
-    // Send registration request to API
-    json request;
-    request["telegram_id"] = telegramID;
-    request["username"] = username;
-    request["hwid"] = currentHWID;
-    
-    // In production, send this to the backend API
+    // Disabled - requires json library
     std::cout << "Registering user: " << username << " (Telegram ID: " << telegramID << ")" << std::endl;
     
     currentTelegramID = telegramID;
@@ -119,15 +111,7 @@ bool AuthManager::isUserAuthorized(const std::string& telegramID) {
 }
 
 bool AuthManager::sendTelegramMessage(const std::string& chatID, const std::string& message) {
-    // Send message via Telegram Bot API
-    std::string url = "https://api.telegram.org/bot" + config.telegramBotToken + "/sendMessage";
-    
-    json payload;
-    payload["chat_id"] = chatID;
-    payload["text"] = message;
-    payload["parse_mode"] = "HTML";
-    
-    // In production, use curl to send this request
+    // Disabled - requires json library
     std::cout << "Sending Telegram message to " << chatID << ": " << message << std::endl;
     
     return true;
@@ -148,16 +132,9 @@ bool AuthManager::fetchLicenseFromAPI(const std::string& key) {
 }
 
 bool AuthManager::submitHWIDToAPI(const std::string& key, const std::string& hwid) {
-    // Submit HWID to backend API for binding
-    std::string url = config.apiEndpoint + "/license/" + key + "/bind";
+    // Disabled - requires json library
+    std::cout << "Submitting HWID to API" << std::endl;
     
-    json payload;
-    payload["hwid"] = hwid;
-    payload["timestamp"] = std::time(nullptr);
-    
-    std::cout << "Submitting HWID to API: " << url << std::endl;
-    
-    // In production, use curl to submit this
     return true;
 }
 
