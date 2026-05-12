@@ -76,9 +76,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Set output directory
-set_target_properties(${PROJECT_
-)
-NAME} PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
