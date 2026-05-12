@@ -11,7 +11,7 @@
 enum class LogLevel {
     INFO,
     WARNING,
-    ERROR,
+    ERR,
     DEBUG
 };
 
@@ -22,7 +22,7 @@ public:
     void log(LogLevel level, const std::string& message);
     void info(const std::string& message);
     void warning(const std::string& message);
-    void error(const std::string& message);
+    void err(const std::string& message);
     void debug(const std::string& message);
     
     void setLogFile(const std::string& filename);

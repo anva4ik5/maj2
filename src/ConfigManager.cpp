@@ -261,7 +261,6 @@ void ConfigManager::set(const std::string& key, const std::string& value) {
     else if (key == "enable_overlay") config.enableOverlay = (value == "true");
     else if (key == "enable_aimbot") config.enableAimbot = (value == "true");
     else if (key == "enable_esp") config.enableESP = (value == "true");
-    else if (key == "enable_wallhack") config.enableWallhack = (value == "true");
 }
 
 std::string ConfigManager::get(const std::string& key) const {
@@ -270,7 +269,6 @@ std::string ConfigManager::get(const std::string& key) const {
     else if (key == "enable_overlay") return config.enableOverlay ? "true" : "false";
     else if (key == "enable_aimbot") return config.enableAimbot ? "true" : "false";
     else if (key == "enable_esp") return config.enableESP ? "true" : "false";
-    else if (key == "enable_wallhack") return config.enableWallhack ? "true" : "false";
     else if (key == "target_process") return config.targetProcess;
     return "";
 }

@@ -345,8 +345,7 @@ void GameCheat::sendTelemetry() {
     std::string data = "{"
         "\"status\":\"active\","
         "\"aimbot\":" + std::string(config.getConfig().enableAimbot ? "true" : "false") + ","
-        "\"esp\":" + std::string(config.getConfig().enableESP ? "true" : "false") + ","
-        "\"wallhack\":" + std::string(config.getConfig().enableWallhack ? "true" : "false") +
+        "\"esp\":" + std::string(config.getConfig().enableESP ? "true" : "false") +
     "}";
     
     networkClient->sendPOSTRequest("/telemetry", data);
