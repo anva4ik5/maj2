@@ -81,4 +81,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 # Copy config file to output directory
-configure_file(config.ini ${CMAKE_BINARY_DIR}/bin/config.ini COPYONLY)
+if(EXISTS ${CMAKE_SOURCE_DIR}/config.ini)
+    configure_file(config.ini ${CMAKE_BINARY_DIR}/bin/config.ini COPYONLY)
+endif()

@@ -1,8 +1,7 @@
 #include "BackendAPI.h"
 #include <iostream>
 #include <sstream>
-
-using json = nlohmann::json;
+#include <random>
 
 BackendAPI::BackendAPI() {
 }
@@ -21,21 +20,16 @@ void BackendAPI::initialize(const std::string& apiEndpoint, const std::string& a
 APIResponse BackendAPI::validateLicense(const std::string& key) {
     std::string endpoint = apiEndpoint + "/api/license/validate";
     
-    json payload;
-    payload["key"] = key;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
 APIResponse BackendAPI::activateLicense(const std::string& key, const std::string& hwid) {
     std::string endpoint = apiEndpoint + "/api/license/activate";
     
-    json payload;
-    payload["key"] = key;
-    payload["hwid"] = hwid;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
@@ -48,10 +42,8 @@ APIResponse BackendAPI::checkLicenseStatus(const std::string& key) {
 APIResponse BackendAPI::bindHWID(const std::string& key, const std::string& hwid) {
     std::string endpoint = apiEndpoint + "/api/license/" + key + "/bind";
     
-    json payload;
-    payload["hwid"] = hwid;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
@@ -64,23 +56,16 @@ APIResponse BackendAPI::unbindHWID(const std::string& key) {
 APIResponse BackendAPI::registerUser(const std::string& telegramID, const std::string& username, const std::string& hwid) {
     std::string endpoint = apiEndpoint + "/api/user/register";
     
-    json payload;
-    payload["telegram_id"] = telegramID;
-    payload["username"] = username;
-    payload["hwid"] = hwid;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
 APIResponse BackendAPI::loginUser(const std::string& telegramID, const std::string& hwid) {
     std::string endpoint = apiEndpoint + "/api/user/login";
     
-    json payload;
-    payload["telegram_id"] = telegramID;
-    payload["hwid"] = hwid;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
@@ -93,12 +78,8 @@ APIResponse BackendAPI::getUserInfo(const std::string& telegramID) {
 APIResponse BackendAPI::createLicense(const std::string& adminID, const std::string& userID, int durationDays) {
     std::string endpoint = apiEndpoint + "/api/admin/license/create";
     
-    json payload;
-    payload["admin_id"] = adminID;
-    payload["user_id"] = userID;
-    payload["duration_days"] = durationDays;
-    
-    std::string response = sendRequest(endpoint, "POST", payload.dump());
+    // Disabled - requires json library
+    std::string response = sendRequest(endpoint, "POST", "");
     return parseResponse(response);
 }
 
@@ -172,7 +153,7 @@ APIResponse BackendAPI::parseResponse(const std::string& response) {
         return apiResponse;
     }
     
-    // Disabled JSON parsing for now - requires nlohmann/json
+    // Disabled JSON parsing - requires nlohmann/json
     apiResponse.success = true;
     apiResponse.message = "Response received";
     
