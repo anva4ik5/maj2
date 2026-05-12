@@ -1,0 +1,88 @@
+cmake_minimum_required(VERSION 3.15)
+project(GameCheat_Restored)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find required packages
+find_package(Threads REQUIRED)
+find_package(CURL REQUIRED)
+find_package(nlohmann_json 3.2.0 REQUIRED)
+
+# Source files
+set(SOURCES
+    main.cpp
+    src/MemoryManager.cpp
+    src/DLLInjector.cpp
+    src/NetworkClient.cpp
+    src/DirectXOverlay.cpp
+    src/GameCheat.cpp
+    src/ConfigManager.cpp
+    src/UIRenderer.cpp
+    src/Aimbot.cpp
+    src/Misc.cpp
+    src/Visuals.cpp
+    src/JSExecutor.cpp
+    src/Logger.cpp
+    src/AntiCheatBypass.cpp
+    src/LogoRenderer.cpp
+    src/KeyBindManager.cpp
+    src/OBSBypass.cpp
+    src/SelfDestruct.cpp
+    src/AdminDetector.cpp
+    src/AntiCheatDetector.cpp
+    src/HWIDManager.cpp
+    src/AuthManager.cpp
+    src/TelegramBot.cpp
+    src/BackendAPI.cpp
+)
+
+# Header files
+set(HEADERS
+    src/MemoryManager.h
+    src/DLLInjector.h
+    src/NetworkClient.h
+    src/DirectXOverlay.h
+    src/GameCheat.h
+    src/ConfigManager.h
+    src/UIRenderer.h
+    src/Aimbot.h
+    src/Misc.h
+    src/Visuals.h
+    src/JSExecutor.h
+    src/Logger.h
+    src/AntiCheatBypass.h
+    src/LogoRenderer.h
+    src/KeyBindManager.h
+    src/OBSBypass.h
+    src/SelfDestruct.h
+    src/AdminDetector.h
+    src/AntiCheatDetector.h
+    src/HWIDManager.h
+    src/AuthManager.h
+    src/TelegramBot.h
+    src/BackendAPI.h
+)
+
+# Create executable
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+# Link libraries
+target_link_libraries(${PROJECT_NAME} 
+    PRIVATE
+    d3d11.lib
+    d3dcompiler.lib
+    wininet.lib
+    ws2_32.lib
+    Threads::Threads
+)
+
+    CURL::libcurl
+    nlohmann_json::nlohmann_json
+# Set output directory
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Copy config file to output directory
+configure_file(config.ini ${CMAKE_BINARY_DIR}/bin/config.ini COPYONLY)
