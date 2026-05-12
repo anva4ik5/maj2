@@ -6,8 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
 find_package(Threads REQUIRED)
-find_package(CURL REQUIRED)
-find_package(nlohmann_json 3.2.0 REQUIRED)
 
 # Source files
 set(SOURCES
@@ -77,10 +75,10 @@ target_link_libraries(${PROJECT_NAME}
     Threads::Threads
 )
 
-    CURL::libcurl
-    nlohmann_json::nlohmann_json
 # Set output directory
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${PROJECT_
+)
+NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
