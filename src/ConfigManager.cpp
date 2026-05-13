@@ -80,7 +80,7 @@ std::map<std::string, std::string> ConfigManager::parseConfigFile(const std::str
 bool ConfigManager::loadFromFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Failed to open config file: " << filename << std::endl;
+        // Not an error: file is optional, embedded defaults will be used
         return false;
     }
     

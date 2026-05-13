@@ -67,10 +67,12 @@ int main(int argc, char* argv[]) {
     std::cout << "GameCheat - Restored Version" << std::endl;
     std::cout << "=============================" << std::endl;
     
-    // Load configuration
+    // Load configuration (config.ini is optional - embedded defaults are used otherwise)
     ConfigManager& config = ConfigManager::getInstance();
-    if (!config.loadFromFile("config.ini")) {
-        std::cout << "Using default configuration" << std::endl;
+    if (config.loadFromFile("config.ini")) {
+        std::cout << "Loaded config.ini" << std::endl;
+    } else {
+        std::cout << "Using built-in configuration (no config.ini)" << std::endl;
     }
     
     // Parse command line arguments
