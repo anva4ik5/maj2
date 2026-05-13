@@ -103,7 +103,7 @@ void Visuals::renderName(Entity* entity) {
     Vec2 screenPos = worldToScreen(entity->headPosition);
     if (screenPos.x < 0 || screenPos.y < 0) return;
     
-    overlay->drawText(entity.name, {screenPos.x, screenPos.y - 35}, {1, 1, 1, 1}, 16.0f);
+    overlay->drawText(entity->name, {screenPos.x, screenPos.y - 35}, {1, 1, 1, 1}, 16.0f);
 }
 
 void Visuals::renderWeapons(Entity* entity) {

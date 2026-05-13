@@ -92,5 +92,3 @@ private:
     std::vector<std::string> events;
     std::mutex mutex;
 };
-    std::mutex mutex;
-};

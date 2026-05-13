@@ -193,10 +193,6 @@ void UIRenderer::renderMenu() {
     renderTabContent();
 }
 
-void UIRenderer::renderFullMenu() {
-    renderMenu();
-}
-
 void UIRenderer::renderTabs() {
     float tabWidth = menuSize.x / tabs.size();
     float tabHeight = 40;
@@ -248,37 +244,6 @@ void UIRenderer::renderTabContent() {
         case 5: renderSecuritySection(); break;
     }
 }
-
-void UIRenderer::renderFullMenu() {
-    Vec2 menuPos = {50, 50};
-    Vec2 menuSize = {400, 600};
-    
-    // Background
-    overlay->drawFilledBox(menuPos, menuSize, {0.1f, 0.1f, 0.1f, 0.95f});
-    overlay->drawBox(menuPos, menuSize, {1, 1, 1, 1}, 2.0f);
-    
-    // Title
-    overlay->drawText("GameCheat Menu", {menuPos.x + 10, menuPos.y + 10}, {1, 1, 1, 1}, 24.0f);
-    
-    float yOffset = 50;
-    
-    // Aimbot section
-    renderAimbotSection();
-    
-    // Misc section
-    renderMiscSection();
-    
-    // Visuals section
-    renderVisualsSection();
-    
-    // JS Executor section
-    renderJSExecutorSection();
-    
-    // Config section
-    renderConfigSection();
-    
-    // Footer
-    yOffset = menuSize.y - 30;
     overlay->drawText("[F1] Toggle Menu", {menuPos.x + 10, menuPos.y + yOffset}, {0.7f, 0.7f, 0.7f, 1}, 14.0f);
 }
 
