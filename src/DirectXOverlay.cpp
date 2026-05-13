@@ -1,5 +1,14 @@
 #include "DirectXOverlay.h"
 #include <iostream>
+#include <vector>
+// Convert UTF-8 string to wide for DirectWrite
+static std::wstring utf8ToWide(const std::string& s) {
+    if (s.empty()) return std::wstring();
+    int n = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    std::wstring w(n, 0);
+    MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), w.data(), n);
+    return w;
+}
 
 DirectXOverlay::DirectXOverlay()
     : device(nullptr), context(nullptr), swapChain(nullptr),
@@ -136,9 +145,59 @@ bool DirectXOverlay::initialize(HWND targetWindow) {
     if (!createBlendState()) {
         std::cerr << "Failed to create blend state" << std::endl;
     }
+    
+    // Setup Direct2D + DirectWrite on top of existing D3D11 swap chain
+    if (!setupD2D()) {
+        std::cerr << "Failed to setup D2D, text/primitives won't render" << std::endl;
+        // Continue anyway - basic D3D11 still works
+    }
 
     initialized = true;
     return true;
+}
+
+bool DirectXOverlay::setupD2D() {
+    HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
+    if (FAILED(hr)) return false;
+    
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+                             reinterpret_cast<IUnknown**>(&dwriteFactory));
+    if (FAILED(hr)) return false;
+    
+    // Get DXGI surface from swap chain to bind D2D to it
+    IDXGISurface* dxgiSurface = nullptr;
+    hr = swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void**)&dxgiSurface);
+    if (FAILED(hr)) return false;
+    
+    D2D1_RENDER_TARGET_PROPERTIES rtProps = D2D1::RenderTargetProperties(
+        D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+        96.0f, 96.0f);
+    
+    hr = d2dFactory->CreateDxgiSurfaceRenderTarget(dxgiSurface, &rtProps, &d2dRenderTarget);
+    dxgiSurface->Release();
+    if (FAILED(hr)) return false;
+    
+    // Default text format (Segoe UI 14pt)
+    hr = dwriteFactory->CreateTextFormat(
+        L"Segoe UI", nullptr,
+        DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+        14.0f, L"en-us", &defaultTextFormat);
+    if (FAILED(hr)) return false;
+    
+    // Reusable solid color brush
+    hr = d2dRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1, 1, 1, 1), &solidBrush);
+    if (FAILED(hr)) return false;
+    
+    return true;
+}
+
+void DirectXOverlay::cleanupD2D() {
+    if (solidBrush) { solidBrush->Release(); solidBrush = nullptr; }
+    if (defaultTextFormat) { defaultTextFormat->Release(); defaultTextFormat = nullptr; }
+    if (d2dRenderTarget) { d2dRenderTarget->Release(); d2dRenderTarget = nullptr; }
+    if (dwriteFactory) { dwriteFactory->Release(); dwriteFactory = nullptr; }
+    if (d2dFactory) { d2dFactory->Release(); d2dFactory = nullptr; }
 }
 
 void DirectXOverlay::syncWindowPosition() {
@@ -152,6 +211,8 @@ void DirectXOverlay::syncWindowPosition() {
 }
 
 void DirectXOverlay::cleanup() {
+    cleanupD2D();
+    
     if (blendState) blendState->Release();
     if (renderTargetView) renderTargetView->Release();
     if (swapChain) swapChain->Release();
@@ -181,10 +242,26 @@ void DirectXOverlay::beginFrame() {
         float blendFactor[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         context->OMSetBlendState(blendState, blendFactor, 0xFFFFFFFF);
     }
+    
+    // Clear to fully transparent every frame so previous frame doesn't ghost
+    float clearColor[4] = {0, 0, 0, 0};
+    context->ClearRenderTargetView(renderTargetView, clearColor);
+    
+    // Begin D2D drawing pass
+    if (d2dRenderTarget && !d2dFrameOpen) {
+        d2dRenderTarget->BeginDraw();
+        d2dFrameOpen = true;
+    }
 }
 
 void DirectXOverlay::endFrame() {
     if (!initialized) return;
+    
+    // Close D2D pass before presenting
+    if (d2dRenderTarget && d2dFrameOpen) {
+        d2dRenderTarget->EndDraw();
+        d2dFrameOpen = false;
+    }
     
     swapChain->Present(1, 0);
 }
@@ -196,24 +273,60 @@ void DirectXOverlay::clearScreen(Color color) {
     context->ClearRenderTargetView(renderTargetView, clearColor);
 }
 
-// Placeholder implementations - would need proper rendering system
+// === Real implementations using Direct2D / DirectWrite ===
+
 void DirectXOverlay::drawText(const std::string& text, Vec2 position, Color color, float size) {
-    // TODO: Implement text rendering with DirectWrite or custom font system
-    // This requires creating a font texture and rendering quads
+    if (!d2dRenderTarget || !solidBrush || !dwriteFactory) return;
+    
+    std::wstring wtext = utf8ToWide(text);
+    if (wtext.empty()) return;
+    
+    // Create text format with requested size (cached default for 14, on-demand otherwise)
+    IDWriteTextFormat* fmt = nullptr;
+    if (size == 14.0f && defaultTextFormat) {
+        fmt = defaultTextFormat;
+        fmt->AddRef();
+    } else {
+        HRESULT hr = dwriteFactory->CreateTextFormat(
+            L"Segoe UI", nullptr,
+            DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            size, L"en-us", &fmt);
+        if (FAILED(hr) || !fmt) return;
+    }
+    
+    solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
+    D2D1_RECT_F layout = D2D1::RectF(position.x, position.y, position.x + 2000.0f, position.y + size * 1.5f);
+    d2dRenderTarget->DrawTextW(wtext.c_str(), (UINT32)wtext.size(), fmt, layout, solidBrush);
+    
+    fmt->Release();
 }
 
 void DirectXOverlay::drawBox(Vec2 position, Vec2 size, Color color, float thickness) {
-    // TODO: Implement box rendering with vertex buffer
+    if (!d2dRenderTarget || !solidBrush) return;
+    solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
+    D2D1_RECT_F rect = D2D1::RectF(position.x, position.y, position.x + size.x, position.y + size.y);
+    d2dRenderTarget->DrawRectangle(rect, solidBrush, thickness);
 }
 
 void DirectXOverlay::drawFilledBox(Vec2 position, Vec2 size, Color color) {
-    // TODO: Implement filled box rendering
+    if (!d2dRenderTarget || !solidBrush) return;
+    solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
+    D2D1_RECT_F rect = D2D1::RectF(position.x, position.y, position.x + size.x, position.y + size.y);
+    d2dRenderTarget->FillRectangle(rect, solidBrush);
 }
 
 void DirectXOverlay::drawLine(Vec2 start, Vec2 end, Color color, float thickness) {
-    // TODO: Implement line rendering
+    if (!d2dRenderTarget || !solidBrush) return;
+    solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
+    d2dRenderTarget->DrawLine(
+        D2D1::Point2F(start.x, start.y),
+        D2D1::Point2F(end.x, end.y),
+        solidBrush, thickness);
 }
 
 void DirectXOverlay::drawCircle(Vec2 center, float radius, Color color, float thickness) {
-    // TODO: Implement circle rendering
+    if (!d2dRenderTarget || !solidBrush) return;
+    solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
+    D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F(center.x, center.y), radius, radius);
+    d2dRenderTarget->DrawEllipse(ellipse, solidBrush, thickness);
 }

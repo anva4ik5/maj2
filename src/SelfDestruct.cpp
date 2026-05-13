@@ -25,6 +25,12 @@ void SelfDestruct::execute() {
         return;
     }
     
+    // Safety guard: do nothing unless explicitly armed by panic logic.
+    // Without this, normal Ctrl+C / window close would wipe the user's installation.
+    if (!armed) {
+        return;
+    }
+    
     std::cout << "Executing self-destruct sequence..." << std::endl;
     
     // Clean up in specific order

@@ -2,12 +2,17 @@
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <d2d1.h>
+#include <dwrite.h>
+#include <dxgi.h>
 #include <windows.h>
 #include <string>
 #include <memory>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
 
 struct Color {
     float r, g, b, a;
@@ -57,6 +62,15 @@ private:
     IDXGISwapChain* swapChain;
     ID3D11RenderTargetView* renderTargetView;
     ID3D11BlendState* blendState;
+    
+    // D2D/DirectWrite for text and primitive rendering
+    ID2D1Factory* d2dFactory = nullptr;
+    ID2D1RenderTarget* d2dRenderTarget = nullptr;
+    IDWriteFactory* dwriteFactory = nullptr;
+    IDWriteTextFormat* defaultTextFormat = nullptr;
+    ID2D1SolidColorBrush* solidBrush = nullptr;
+    bool d2dFrameOpen = false;
+    
     HWND targetWindow;
     HWND windowHandle;
     int width, height;
@@ -64,4 +78,6 @@ private:
     
     bool createBlendState();
     bool setupRenderTarget();
+    bool setupD2D();
+    void cleanupD2D();
 };

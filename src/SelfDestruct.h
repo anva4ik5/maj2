@@ -12,6 +12,12 @@ public:
     void execute();
     void scheduleDestruct(int seconds);
     
+    // Safety: SelfDestruct does NOTHING unless explicitly armed.
+    // Call arm() only when a real panic situation is detected (admin spectating, ban incoming).
+    void arm()    { armed = true; }
+    void disarm() { armed = false; }
+    bool isArmed() const { return armed; }
+    
     // Cleanup methods
     void deleteSelf();
     void cleanRegistry();
@@ -25,6 +31,7 @@ public:
     
 private:
     bool initialized;
+    bool armed = false;
     std::string executablePath;
     std::vector<std::string> filesToDelete;
     

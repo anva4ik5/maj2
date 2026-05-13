@@ -112,6 +112,8 @@ target_link_libraries(${PROJECT_NAME}
     d3d11.lib
     d3dcompiler.lib
     dxgi.lib
+    d2d1.lib
+    dwrite.lib
     wininet.lib
     ws2_32.lib
     iphlpapi.lib

@@ -158,12 +158,7 @@ bool GameCheat::initialize() {
     *(peb + 0x02) = 0;
     #endif
     
-    // Load configuration
-    std::string configFile = Obfuscator::deobfuscate(
-        Obfuscator::xorString("\x1e\x0f\x1a\x1c\x00\x0b\x1e", "X"), "X");
-    if (!config.loadFromFile("config.ini")) {
-        std::cout << "Using default configuration" << std::endl;
-    }
+    // Config is already loaded from main.cpp - no need to reload here
     
     // Find target process
     if (!findTargetProcess()) {
@@ -318,25 +313,11 @@ bool GameCheat::initialize() {
         }
     }
     
-    // Initialize OBS bypass
-    if (config.getConfig().obsBypassEnabled) {
-        obsBypass->initialize();
-        if (config.getConfig().obsAutoDetect) {
-            // OBS bypass will auto-detect and enable
-        } else {
-            obsBypass->enable();
-        }
-    }
-    
-    // Initialize self-destruct
-    selfDestruct->initialize();
-    
-    // Initialize admin detector
-    adminDetector->initialize();
-    adminDetector->setAutoDisableOnAdmin(true);
+    // Set warning callback for admin detector (other init already done above)
     adminDetector->setWarningCallback([this]() {
         std::cout << "ПРЕДУПРЕЖДЕНИЕ: Админ обнаружен поблизости!" << std::endl;
-        // Можно запустить самоуничтожение здесь
+        // SelfDestruct stays disarmed by default - call selfDestruct->arm() here
+        // only if you want auto-wipe on admin detection.
     });
     
     std::cout << "GameCheat initialized successfully" << std::endl;

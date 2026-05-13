@@ -102,7 +102,10 @@ uintptr_t MemoryManager::findPattern(HANDLE hProcess, uintptr_t start, size_t si
     }
     
     // Search for pattern
-    for (size_t i = 0; i < buffer.size() - patternBytes.size() + 1; i++) {
+    if (patternBytes.empty() || patternBytes.size() > buffer.size()) {
+        return 0;
+    }
+    for (size_t i = 0; i <= buffer.size() - patternBytes.size(); i++) {
         bool match = true;
         
         for (size_t j = 0; j < patternBytes.size(); j++) {
