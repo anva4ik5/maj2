@@ -139,7 +139,7 @@ void Visuals::renderHPBar(Entity* entity) {
     Vec2 screenPos = worldToScreen(entity->headPosition);
     if (screenPos.x < 0 || screenPos.y < 0) return;
     
-    float hpPercent = (float)entity.health / 100.0f; // Assuming max HP is 100
+    float hpPercent = (float)entity->health / 100.0f; // Assuming max HP is 100
     Vec2 barSize = {50, 5};
     Vec2 barPos = {screenPos.x - barSize.x / 2, screenPos.y - 45};
     
@@ -148,7 +148,7 @@ void Visuals::renderHPBar(Entity* entity) {
     
     // Health
     Vec2 healthSize = {barSize.x * hpPercent, barSize.y};
-    Color healthColor = getHealthColor(entity.health, 100);
+    Color healthColor = getHealthColor(entity->health, 100);
     overlay->drawFilledBox(barPos, healthSize, healthColor);
 }
 
