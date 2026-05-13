@@ -1,6 +1,13 @@
 #include "DirectXOverlay.h"
 #include <iostream>
 #include <vector>
+
+// Windows headers expose DrawText as a macro that resolves to DrawTextW/A.
+// D2D has its own ID2D1RenderTarget::DrawText member, so the macro must go.
+#ifdef DrawText
+#undef DrawText
+#endif
+
 // Convert UTF-8 string to wide for DirectWrite
 static std::wstring utf8ToWide(const std::string& s) {
     if (s.empty()) return std::wstring();
@@ -296,7 +303,7 @@ void DirectXOverlay::drawText(const std::string& text, Vec2 position, Color colo
     
     solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
     D2D1_RECT_F layout = D2D1::RectF(position.x, position.y, position.x + 2000.0f, position.y + size * 1.5f);
-    d2dRenderTarget->DrawTextW(wtext.c_str(), (UINT32)wtext.size(), fmt, layout, solidBrush);
+    d2dRenderTarget->DrawText(wtext.c_str(), (UINT32)wtext.size(), fmt, layout, solidBrush);
     
     fmt->Release();
 }
