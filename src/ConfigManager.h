@@ -18,7 +18,7 @@ public:
         // General
         bool enableOverlay = true;
         int overlayColor = 0xFFFFFFFF;
-        std::string targetProcess = "rust.exe";
+        std::string targetProcess = "auto";
         int logLevel = 1;
         bool autoStart = false;
         

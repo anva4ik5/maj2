@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <windows.h>
 #include "src/GameCheat.h"
 #include "src/ConfigManager.h"
 #include "src/BackendAPI.h"
@@ -7,6 +8,10 @@
 #include "src/AuthFlow.h"
 
 int main(int argc, char* argv[]) {
+    // Force UTF-8 console output so Cyrillic displays correctly
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+    
     std::cout << "GameCheat - Restored Version" << std::endl;
     std::cout << "=============================" << std::endl;
     
