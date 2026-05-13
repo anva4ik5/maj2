@@ -88,9 +88,9 @@ uintptr_t MemoryManager::findPattern(HANDLE hProcess, uintptr_t start, size_t si
     std::vector<bool> patternMask;
     
     for (size_t i = 0; i < pattern.length(); i += 3) {
-        if (i + 2 >= pattern.length()) break;
+        if (i + 1 >= pattern.length()) break;
         
-        if (pattern[i] == '?' && pattern[i+1] == '?') {
+        if (pattern[i] == '?' && (i + 1 < pattern.length() && pattern[i+1] == '?')) {
             patternBytes.push_back(0);
             patternMask.push_back(false);
         } else {
@@ -118,6 +118,10 @@ uintptr_t MemoryManager::findPattern(HANDLE hProcess, uintptr_t start, size_t si
     }
     
     return 0;
+}
+
+uintptr_t MemoryManager::findModule(HANDLE hProcess, const std::string& moduleName) {
+    return getModuleBase(hProcess, moduleName);
 }
 
 uintptr_t MemoryManager::getModuleBase(HANDLE hProcess, const std::string& moduleName) {

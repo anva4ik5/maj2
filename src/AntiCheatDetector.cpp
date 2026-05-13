@@ -30,6 +30,9 @@ AntiCheatInfo AntiCheatDetector::detect() {
     } else if (isMajesticRunning()) {
         detectedAntiCheat = getAntiCheatInfo(AntiCheatType::MAJESTIC);
         detectedAntiCheat.detected = true;
+    } else if (isAltVRunning()) {
+        detectedAntiCheat = getAntiCheatInfo(AntiCheatType::ALT_V);
+        detectedAntiCheat.detected = true;
     }
     
     return detectedAntiCheat;
@@ -60,6 +63,13 @@ bool AntiCheatDetector::isMajesticRunning() {
     // Check for Majestic RP anti-cheat
     return checkProcess("gta5.exe") && 
            checkModule("majestic_ac.dll");
+}
+
+bool AntiCheatDetector::isAltVRunning() {
+    // alt:V multiplayer client process / launcher
+    return checkProcess("altv.exe") ||
+           checkProcess("altv-launcher.exe") ||
+           checkProcess("altv-client.exe");
 }
 
 AntiCheatInfo AntiCheatDetector::getDetectedAntiCheat() {
@@ -184,9 +194,20 @@ void AntiCheatDetector::initializeSupportedAntiCheats() {
     ff.version = "Latest";
     ff.processName = "fairfight.dll";
     ff.detected = false;
-    pb.bypassAvailable = true;
+    ff.bypassAvailable = true;
     ff.status = "Bypass available";
     supportedAntiCheats.push_back(ff);
+
+    // alt:V
+    AntiCheatInfo altv;
+    altv.type = AntiCheatType::ALT_V;
+    altv.name = "alt:V Multiplayer";
+    altv.version = "Latest";
+    altv.processName = "altv.exe";
+    altv.detected = false;
+    altv.bypassAvailable = true;
+    altv.status = "Bypass available";
+    supportedAntiCheats.push_back(altv);
 }
 
 AntiCheatInfo AntiCheatDetector::getAntiCheatInfo(AntiCheatType type) {

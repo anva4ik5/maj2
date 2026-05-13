@@ -26,6 +26,8 @@ public:
     void setSlideRun(bool enabled);
     void setFastRun(bool enabled);
     void setGodMode(bool enabled);
+    void setInvisibility(bool enabled);
+    bool getInvisibilityState() const { return invisibility; }
     void suicide();
     void applyDamage(float amount);
     
@@ -45,6 +47,7 @@ private:
     bool slideRun;
     bool fastRun;
     bool godMode;
+    bool invisibility;
     bool recoilShare;
     
     float recoilAccuracy;
@@ -57,5 +60,7 @@ private:
     void applySlideRun();
     void applyFastRun();
     void applyGodMode();
+    void applyInvisibility();
+    void restoreVisibility();
     void applyRecoilModifications();
 };

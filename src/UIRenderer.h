@@ -67,6 +67,8 @@ public:
     
     void render();
     void update(float deltaTime);
+    void handleMouseInput();
+    void handleKeyboardInput();
     
     void addText(const std::string& text, Vec2 position, Color color = Color(), float size = 16.0f);
     void addBox(Vec2 position, Vec2 size, Color color = Color(), float thickness = 1.0f);
@@ -138,9 +140,16 @@ private:
     void renderRoundedBox(Vec2 position, Vec2 size, Color color, float radius);
     void renderGlowingBox(Vec2 position, Vec2 size, Color color, float glowIntensity);
     void renderGradientBox(Vec2 position, Vec2 size, Color color1, Color color2, bool horizontal);
+    void renderNeonBorder(Vec2 position, Vec2 size, Color color, float thickness);
+    void renderShadow(Vec2 position, Vec2 size, float blur);
+    void renderModernHeader(Vec2 position, Vec2 size);
     
     void updateAnimation(Animation& anim, float deltaTime);
     float getAnimationValue(Animation& anim);
+    float easeOutQuad(float t);
+    float easeOutCubic(float t);
+    float easeInOutCubic(float t);
+    float easeOutElastic(float t);
     
     bool isMouseOver(Vec2 position, Vec2 size);
     Vec2 getMousePosition();

@@ -213,25 +213,42 @@ bool AuthManager::isDateExpired(const std::string& date) {
     return false;
 }
 
+std::string AuthManager::deriveKeyFromHWID(const std::string& hwid) {
+    std::string base = "MAJESTIC_RP_CHEAT_KEY";
+    std::string derived = base;
+    for (size_t i = 0; i < hwid.size() && i < 16; i++) {
+        derived[i % base.size()] ^= hwid[i] ^ static_cast<char>((i * 7 + 13) % 256);
+    }
+    return derived;
+}
+
 std::string AuthManager::encryptData(const std::string& data) {
-    // Simple XOR encryption (in production, use AES)
-    std::string key = "MAJESTIC_RP_CHEAT_KEY";
+    std::string key = deriveKeyFromHWID(currentHWID);
     std::string encrypted = data;
     
     for (size_t i = 0; i < data.size(); i++) {
-        encrypted[i] = data[i] ^ key[i % key.size()];
+        char k = key[i % key.size()];
+        char c = data[i] ^ k;
+        // Additional bit rotation for obfuscation
+        c = (c << 3) | (c >> 5);
+        c ^= static_cast<char>((i * 31 + 47) % 256);
+        encrypted[i] = c;
     }
     
     return encrypted;
 }
 
 std::string AuthManager::decryptData(const std::string& encrypted) {
-    // Simple XOR decryption (in production, use AES)
-    std::string key = "MAJESTIC_RP_CHEAT_KEY";
+    std::string key = deriveKeyFromHWID(currentHWID);
     std::string decrypted = encrypted;
     
     for (size_t i = 0; i < encrypted.size(); i++) {
-        decrypted[i] = encrypted[i] ^ key[i % key.size()];
+        char c = encrypted[i];
+        c ^= static_cast<char>((i * 31 + 47) % 256);
+        // Reverse bit rotation
+        c = (c >> 3) | (c << 5);
+        c ^= key[i % key.size()];
+        decrypted[i] = c;
     }
     
     return decrypted;

@@ -41,7 +41,7 @@ public:
 private:
     std::string botToken;
     std::string adminID;
-    bool polling;
+    std::atomic<bool> polling;
     
     std::function<void(const TelegramMessage&)> messageCallback;
     std::function<void(const std::string&, const std::string&)> callbackQueryCallback;

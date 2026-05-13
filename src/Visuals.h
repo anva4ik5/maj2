@@ -14,7 +14,7 @@ public:
     void initialize(HANDLE hProcess);
     void render();
     
-    void setEnabled(bool enabled) { enabled = enabled; }
+    void setEnabled(bool value) { enabled = value; }
     bool isEnabled() const { return enabled; }
     
 private:
@@ -44,6 +44,7 @@ private:
     bool vehicles;
     
     std::vector<Entity> entities;
+    Vector3 localPlayerPosition;
     
     void updateEntities();
     void renderSkeleton(Entity* entity);

@@ -44,7 +44,7 @@ public:
     void setAimKey(int key) { aimKey = key; }
     void setDamagerKey(int key) { damagerKey = key; }
     
-    void setEnabled(bool enabled) { enabled = enabled; }
+    void setEnabled(bool value) { enabled = value; }
     bool isEnabled() const { return enabled; }
     
     void setMode(int mode) { aimbotMode = mode; }
@@ -74,7 +74,7 @@ private:
     bool enableDamager;
     int shootRate;
     
-    Entity* currentTarget;
+    int currentTargetIndex;
     uint64_t lastShotTime;
     
     std::vector<Entity> entities;

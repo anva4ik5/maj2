@@ -16,13 +16,13 @@ UIRenderer::~UIRenderer() {
 }
 
 void UIRenderer::initializeStyle() {
-    // Dark hacker style colors
-    backgroundColor = {0.08f, 0.08f, 0.1f, 0.95f};  // Dark blue-gray
-    primaryColor = {0.13f, 0.13f, 0.18f, 1.0f};       // Slightly lighter
-    secondaryColor = {0.18f, 0.18f, 0.25f, 1.0f};    // Medium gray
-    accentColor = {0.0f, 0.7f, 1.0f, 1.0f};          // Cyan neon
-    textColor = {1.0f, 1.0f, 1.0f, 1.0f};            // White
-    disabledColor = {0.4f, 0.4f, 0.4f, 1.0f};        // Gray
+    // Modern dark cyberpunk theme
+    backgroundColor = {0.06f, 0.06f, 0.09f, 0.96f};   // Deep dark background
+    primaryColor = {0.10f, 0.10f, 0.14f, 1.0f};        // Panel background
+    secondaryColor = {0.14f, 0.14f, 0.20f, 1.0f};     // Elevated panels
+    accentColor = {0.0f, 0.85f, 0.7f, 1.0f};            // Teal/cyan neon accent
+    textColor = {0.95f, 0.95f, 0.97f, 1.0f};           // Soft white
+    disabledColor = {0.35f, 0.35f, 0.40f, 1.0f};       // Muted gray
 }
 
 void UIRenderer::initializeTabs() {
@@ -56,12 +56,18 @@ void UIRenderer::render() {
 }
 
 void UIRenderer::update(float deltaTime) {
-    // Update menu alpha animation
+    // Handle input
+    handleKeyboardInput();
+    if (menuVisible) {
+        handleMouseInput();
+    }
+    
+    // Update menu alpha animation with easing
     if (menuVisible && menuAlpha < 1.0f) {
-        menuAlpha += deltaTime * 3.0f;
+        menuAlpha += deltaTime * 5.0f;
         if (menuAlpha > 1.0f) menuAlpha = 1.0f;
     } else if (!menuVisible && menuAlpha > 0.0f) {
-        menuAlpha -= deltaTime * 3.0f;
+        menuAlpha -= deltaTime * 5.0f;
         if (menuAlpha < 0.0f) menuAlpha = 0.0f;
     }
     
@@ -73,7 +79,6 @@ void UIRenderer::update(float deltaTime) {
     }
     
     // Update hover states
-    Vec2 mousePos = getMousePosition();
     for (auto& element : elements) {
         element.hovered = isMouseOver(element.position, element.size);
     }
@@ -161,30 +166,40 @@ void UIRenderer::clear() {
     elements.clear();
 }
 
-void UIRenderer::renderMenu() {
+void UIRenderer::renderFullMenu() {
     if (menuAlpha <= 0.0f) return;
     
     // Apply menu alpha to background
     Color bgAlpha = backgroundColor;
     bgAlpha.a = menuAlpha * backgroundColor.a;
     
+    // Render shadow behind menu
+    renderShadow({menuPosition.x + 4, menuPosition.y + 4}, menuSize, 8.0f);
+    
     // Render menu background with glow effect
     renderGlowingBox(menuPosition, menuSize, bgAlpha, 0.3f);
     
-    // Render menu border
+    // Render menu border with neon effect
     Color borderColor = accentColor;
-    borderColor.a = menuAlpha;
-    overlay->drawBox(menuPosition, menuSize, borderColor, 2.0f);
+    borderColor.a = menuAlpha * 0.8f;
+    renderNeonBorder(menuPosition, menuSize, borderColor, 1.5f);
     
-    // Render menu header with gradient
+    // Render modern header
     Vec2 headerPos = {menuPosition.x, menuPosition.y};
     Vec2 headerSize = {menuSize.x, 50};
-    renderGradientBox(headerPos, headerSize, primaryColor, secondaryColor, true);
+    renderModernHeader(headerPos, headerSize);
     
-    // Render menu title
+    // Render menu title with glow
     Color titleColor = accentColor;
     titleColor.a = menuAlpha;
     overlay->drawText("MAJESTIC RP CHEAT", {menuPosition.x + 20, menuPosition.y + 15}, titleColor, 20.0f);
+    
+    // Render neon accent under title
+    Vec2 accentPos = {menuPosition.x + 20, menuPosition.y + 42};
+    Vec2 accentSize = {200, 2};
+    Color accentGlow = accentColor;
+    accentGlow.a = menuAlpha * 0.7f;
+    overlay->drawFilledBox(accentPos, accentSize, accentGlow);
     
     // Render tabs
     renderTabs();
@@ -211,18 +226,18 @@ void UIRenderer::renderTabs() {
             overlay->drawBox(currentTabPos, currentTabSize, accentColor, 2.0f);
         }
         
-        Color textColor;
+        Color tabTextColor;
         if (tabs[i].active) {
-            textColor = Color(1, 1, 1, 1);
+            tabTextColor = Color(1, 1, 1, 1);
         } else {
-            textColor = Color(0.7f, 0.7f, 0.7f, 1);
+            tabTextColor = Color(0.7f, 0.7f, 0.7f, 1);
         }
-        textColor.a = menuAlpha;
+        tabTextColor.a = menuAlpha;
         
         // Center text in tab
         float textWidth = tabs[i].name.length() * 8;
         float textX = currentTabPos.x + (tabWidth - textWidth) / 2;
-        overlay->drawText(tabs[i].name, {textX, currentTabPos.y + 12}, textColor, 14.0f);
+        overlay->drawText(tabs[i].name, {textX, currentTabPos.y + 12}, tabTextColor, 14.0f);
     }
 }
 
@@ -277,6 +292,8 @@ void UIRenderer::renderMiscSection() {
     overlay->drawText("Fast Run: On/Off", {menuPos.x + 20, menuPos.y + yOffset}, {0.8f, 0.8f, 0.8f, 1}, 12.0f);
     yOffset += 20;
     overlay->drawText("No Collision: On/Off", {menuPos.x + 20, menuPos.y + yOffset}, {0.8f, 0.8f, 0.8f, 1}, 12.0f);
+    yOffset += 20;
+    overlay->drawText("[F6] Invisibility: On/Off", {menuPos.x + 20, menuPos.y + yOffset}, {0.8f, 0.8f, 0.8f, 1}, 12.0f);
 }
 
 void UIRenderer::renderVisualsSection() {
@@ -444,14 +461,46 @@ void UIRenderer::updateAnimation(Animation& anim, float deltaTime) {
     }
 }
 
+float UIRenderer::easeOutQuad(float t) {
+    return 1.0f - (1.0f - t) * (1.0f - t);
+}
+
+float UIRenderer::easeOutCubic(float t) {
+    return 1.0f - pow(1.0f - t, 3);
+}
+
+float UIRenderer::easeInOutCubic(float t) {
+    return t < 0.5f ? 4.0f * t * t * t : 1.0f - pow(-2.0f * t + 2.0f, 3) / 2.0f;
+}
+
+float UIRenderer::easeOutElastic(float t) {
+    const float c4 = (2.0f * 3.14159265f) / 3.0f;
+    return t == 0.0f ? 0.0f : t == 1.0f ? 1.0f : pow(2.0f, -10.0f * t) * sin((t * 10.0f - 0.75f) * c4) + 1.0f;
+}
+
 float UIRenderer::getAnimationValue(Animation& anim) {
     if (!anim.active) return anim.endValue;
     
     float progress = anim.elapsed / anim.duration;
     float t = progress;
     
-    // Ease out cubic
-    t = 1 - pow(1 - t, 3);
+    switch (anim.type) {
+        case AnimationType::SCALE:
+            t = easeOutElastic(t);
+            break;
+        case AnimationType::GLOW:
+            t = easeInOutCubic(t);
+            break;
+        case AnimationType::SLIDE_LEFT:
+        case AnimationType::SLIDE_RIGHT:
+        case AnimationType::SLIDE_UP:
+        case AnimationType::SLIDE_DOWN:
+            t = easeOutCubic(t);
+            break;
+        default:
+            t = easeOutQuad(t);
+            break;
+    }
     
     return anim.startValue + (anim.endValue - anim.startValue) * t;
 }
@@ -465,5 +514,106 @@ bool UIRenderer::isMouseOver(Vec2 position, Vec2 size) {
 Vec2 UIRenderer::getMousePosition() {
     POINT cursor;
     GetCursorPos(&cursor);
+    if (overlay && overlay->getWindowHandle()) {
+        ScreenToClient(overlay->getWindowHandle(), &cursor);
+    }
     return {static_cast<float>(cursor.x), static_cast<float>(cursor.y)};
+}
+
+void UIRenderer::handleMouseInput() {
+    static bool wasMouseDown = false;
+    bool isMouseDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+    
+    if (isMouseDown && !wasMouseDown) {
+        Vec2 mousePos = getMousePosition();
+        
+        // Check tab clicks
+        float tabWidth = menuSize.x / tabs.size();
+        float tabHeight = 40;
+        Vec2 tabPos = {menuPosition.x, menuPosition.y + 50};
+        
+        for (size_t i = 0; i < tabs.size(); i++) {
+            Vec2 currentTabPos = {tabPos.x + i * tabWidth, tabPos.y};
+            Vec2 currentTabSize = {tabWidth, tabHeight};
+            
+            if (mousePos.x >= currentTabPos.x && mousePos.x <= currentTabPos.x + currentTabSize.x &&
+                mousePos.y >= currentTabPos.y && mousePos.y <= currentTabPos.y + currentTabSize.y) {
+                activeTab = static_cast<int>(i);
+                for (auto& tab : tabs) tab.active = false;
+                tabs[i].active = true;
+                break;
+            }
+        }
+        
+        // Check element clicks
+        for (auto& element : elements) {
+            if (!element.visible || !element.enabled) continue;
+            
+            if (mousePos.x >= element.position.x && mousePos.x <= element.position.x + element.size.x &&
+                mousePos.y >= element.position.y && mousePos.y <= element.position.y + element.size.y) {
+                
+                if (element.onClick) {
+                    element.onClick();
+                    element.animation.active = true;
+                    element.animation.elapsed = 0.0f;
+                    element.animation.type = AnimationType::SCALE;
+                    element.animation.duration = 0.3f;
+                }
+                
+                if (element.toggleValue && element.onToggle) {
+                    *element.toggleValue = !(*element.toggleValue);
+                    element.onToggle();
+                    element.animation.active = true;
+                    element.animation.elapsed = 0.0f;
+                    element.animation.type = AnimationType::GLOW;
+                    element.animation.duration = 0.3f;
+                }
+            }
+        }
+    }
+    
+    wasMouseDown = isMouseDown;
+}
+
+void UIRenderer::handleKeyboardInput() {
+    if ((GetAsyncKeyState(VK_INSERT) & 1) || (GetAsyncKeyState(VK_END) & 1)) {
+        toggleMenu();
+    }
+}
+
+void UIRenderer::renderNeonBorder(Vec2 position, Vec2 size, Color color, float thickness) {
+    // Inner bright line
+    Color bright = color;
+    bright.a = color.a * 0.9f;
+    overlay->drawBox(position, size, bright, thickness);
+    
+    // Outer glow layers
+    for (int i = 1; i <= 3; i++) {
+        Color glow = color;
+        glow.a = color.a * 0.15f / i;
+        Vec2 glowPos = {position.x - i, position.y - i};
+        Vec2 glowSize = {size.x + i * 2, size.y + i * 2};
+        overlay->drawBox(glowPos, glowSize, glow, thickness);
+    }
+}
+
+void UIRenderer::renderShadow(Vec2 position, Vec2 size, float blur) {
+    for (int i = 1; i <= static_cast<int>(blur); i++) {
+        Color shadowColor = {0.0f, 0.0f, 0.0f, 0.08f / i};
+        Vec2 shadowPos = {position.x + i * 0.5f, position.y + i * 0.5f};
+        Vec2 shadowSize = {size.x - i, size.y - i};
+        overlay->drawFilledBox(shadowPos, shadowSize, shadowColor);
+    }
+}
+
+void UIRenderer::renderModernHeader(Vec2 position, Vec2 size) {
+    // Gradient header with accent line
+    renderGradientBox(position, size, 
+        Color(0.08f, 0.08f, 0.12f, 1.0f), 
+        Color(0.12f, 0.12f, 0.18f, 1.0f), true);
+    
+    // Bottom accent line
+    Vec2 linePos = {position.x, position.y + size.y - 2};
+    Vec2 lineSize = {size.x, 2};
+    overlay->drawFilledBox(linePos, lineSize, accentColor);
 }

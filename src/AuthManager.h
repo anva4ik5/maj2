@@ -85,6 +85,7 @@ private:
     bool verifyActivationCode(const std::string& code, const std::string& expected);
     std::string formatDate(const std::string& date);
     bool isDateExpired(const std::string& date);
+    std::string deriveKeyFromHWID(const std::string& hwid);
     std::string encryptData(const std::string& data);
     std::string decryptData(const std::string& encrypted);
 };

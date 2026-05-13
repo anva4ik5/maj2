@@ -91,8 +91,10 @@ void JSExecutor::execute(const std::string& code) {
         if (end != std::string::npos) {
             std::string message = code.substr(start, end - start);
             // Remove quotes
-            if (message.front() == '"' || message.front() == '\'') {
-                message = message.substr(1, message.length() - 2);
+            if (!message.empty() && (message.front() == '"' || message.front() == '\'')) {
+                if (message.length() >= 2) {
+                    message = message.substr(1, message.length() - 2);
+                }
             }
             api_log(message);
         }

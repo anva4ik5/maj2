@@ -4,6 +4,10 @@
 #include <sstream>
 #include <iostream>
 
+static int safeStoi(const std::string& value, int defaultValue = 0) {
+    try { return std::stoi(value); } catch (...) { return defaultValue; }
+}
+
 KeyBindManager::KeyBindManager() {
 }
 
@@ -132,8 +136,8 @@ void KeyBindManager::loadBinds(const std::string& filename) {
         size_t commaPos = value.find(',');
         if (commaPos == std::string::npos) continue;
         
-        int keyCode = std::stoi(value.substr(0, commaPos));
-        int typeInt = std::stoi(value.substr(commaPos + 1));
+        int keyCode = safeStoi(value.substr(0, commaPos));
+        int typeInt = safeStoi(value.substr(commaPos + 1));
         BindType type = static_cast<BindType>(typeInt);
         
         auto it = binds.find(name);

@@ -8,7 +8,7 @@ Aimbot::Aimbot()
       aimbotMode(0), aimBone(6), visibleOnly(true), aimSmooth(0.5f),
       predictionDistance(0.5f), silentAutoFire(false), randomAim(false),
       showFOV(false), enableDamager(false), shootRate(100),
-      currentTarget(nullptr), lastShotTime(0) {
+      currentTargetIndex(-1), lastShotTime(0) {
 }
 
 Aimbot::~Aimbot() {
@@ -36,7 +36,7 @@ void Aimbot::initialize(HANDLE process) {
 
 void Aimbot::update() {
     if (!hProcess || !enabled) {
-        currentTarget = nullptr;
+        currentTargetIndex = -1;
         return;
     }
     
@@ -65,9 +65,9 @@ void Aimbot::update() {
     
     // Check damager key
     if (enableDamager && isDamagerKeyHeld()) {
-        if (currentTarget) {
+        if (currentTargetIndex >= 0 && currentTargetIndex < static_cast<int>(entities.size())) {
             // Apply damage to target
-            // TODO: Implement damage logic
+            // TODO: Implement damage logic using entities[currentTargetIndex]
         }
     }
 }
@@ -109,6 +109,7 @@ void Aimbot::updateEntities() {
 }
 
 Entity* Aimbot::getBestTarget() {
+    currentTargetIndex = -1;
     if (entities.empty()) return nullptr;
     
     // Sort targets based on mode
@@ -119,11 +120,12 @@ Entity* Aimbot::getBestTarget() {
     }
     
     // Find first valid target
-    for (auto& entity : entities) {
-        if (visibleOnly && !entity.isVisible) continue;
-        if (entity.health <= 0) continue;
+    for (size_t i = 0; i < entities.size(); ++i) {
+        if (visibleOnly && !entities[i].isVisible) continue;
+        if (entities[i].health <= 0) continue;
         
-        return &entity;
+        currentTargetIndex = static_cast<int>(i);
+        return &entities[i]; // Valid only until next updateEntities() call
     }
     
     return nullptr;

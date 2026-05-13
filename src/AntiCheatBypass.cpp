@@ -118,15 +118,32 @@ bool AntiCheatBypass::cleanHandles() {
 }
 
 void AntiCheatBypass::enableAntiDebug() {
-    // Enable anti-debug measures
+    // Hide current thread from debugger
+    typedef NTSTATUS(NTAPI* pNtSetInformationThread)(HANDLE, ULONG, PVOID, ULONG);
+    auto NtSetInformationThread = (pNtSetInformationThread)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtSetInformationThread");
+    if (NtSetInformationThread) {
+        const ULONG ThreadHideFromDebugger = 0x11;
+        NtSetInformationThread(GetCurrentThread(), ThreadHideFromDebugger, nullptr, 0);
+    }
     
-    // Check for debugger periodically
-    // This would be done in a separate thread
+    // Manually clear PEB BeingDebugged flag
+    #ifdef _WIN64
+    PBYTE peb = (PBYTE)__readgsqword(0x60);
+    *(peb + 0x02) = 0; // BeingDebugged
+    #else
+    PBYTE peb = (PBYTE)__readfsdword(0x30);
+    *(peb + 0x02) = 0; // BeingDebugged
+    #endif
+    
+    // Check and alert if debugger is detected (but don't crash - stealth first)
+    if (isDebuggerPresent() || isRemoteDebuggerPresent() || checkHardwareBreakpoints()) {
+        // In a real scenario, you might want to self-destruct or disable features
+        // For now, just log
+    }
     
     // Remove debug privileges
     HANDLE hToken;
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) {
-        // Remove debug privilege
         CloseHandle(hToken);
     }
 }
@@ -188,4 +205,131 @@ bool AntiCheatBypass::hideThread(DWORD threadId) {
     // Hide thread from thread list
     // This would involve manipulating thread structures
     return true;
+}
+
+// ===== Anti-cheat specific bypass implementations (stubs) =====
+
+void AntiCheatBypass::applyMajesticBypasses() {
+    bypassMajesticIntegrity();
+    bypassMajesticScreenshot();
+    bypassMajesticMemoryScan();
+    hookMajesticFunctions();
+    std::cout << "[Bypass] Applied Majestic RP bypasses" << std::endl;
+}
+
+void AntiCheatBypass::bypassMajesticIntegrity() {
+    // Patch integrity-check routines (placeholder)
+}
+
+void AntiCheatBypass::bypassMajesticScreenshot() {
+    // Hide overlay from screenshot detection (placeholder)
+}
+
+void AntiCheatBypass::bypassMajesticMemoryScan() {
+    // Scramble signatures during scans (placeholder)
+}
+
+void AntiCheatBypass::hookMajesticFunctions() {
+    // Install hooks on Majestic AC functions (placeholder)
+}
+
+void AntiCheatBypass::unhookMajesticFunctions() {
+    // Restore original Majestic AC functions (placeholder)
+}
+
+bool AntiCheatBypass::isMajesticRunning() {
+    HMODULE m = GetModuleHandleA("majestic_ac.dll");
+    return m != nullptr;
+}
+
+void AntiCheatBypass::applyEACBypasses() {
+    bypassEACIntegrity();
+    bypassEACMemoryScan();
+    bypassEACScreenshot();
+    std::cout << "[Bypass] Applied EAC bypasses" << std::endl;
+}
+
+void AntiCheatBypass::bypassEACIntegrity() {
+    // Placeholder
+}
+
+void AntiCheatBypass::bypassEACMemoryScan() {
+    // Placeholder
+}
+
+void AntiCheatBypass::bypassEACScreenshot() {
+    // Placeholder
+}
+
+void AntiCheatBypass::applyBEBypasses() {
+    bypassBEIntegrity();
+    bypassBEMemoryScan();
+    std::cout << "[Bypass] Applied BattlEye bypasses" << std::endl;
+}
+
+void AntiCheatBypass::bypassBEIntegrity() {
+    // Placeholder
+}
+
+void AntiCheatBypass::bypassBEMemoryScan() {
+    // Placeholder
+}
+
+void AntiCheatBypass::applyAltVBypasses() {
+    bypassAltVIntegrity();
+    bypassAltVMemoryScan();
+    std::cout << "[Bypass] Applied alt:V bypasses" << std::endl;
+}
+
+void AntiCheatBypass::bypassAltVIntegrity() {
+    // alt:V uses CEF + V8 + native module signature checks. Placeholder.
+}
+
+void AntiCheatBypass::bypassAltVMemoryScan() {
+    // alt:V scans loaded modules for known cheat signatures. Placeholder.
+}
+
+void AntiCheatBypass::applyGeneralBypasses() {
+    enableAntiDebug();
+    scrambleSignatures();
+    enableScreenshotBypass();
+    std::cout << "[Bypass] Applied general bypasses" << std::endl;
+}
+
+void AntiCheatBypass::enableScreenshotBypass() {
+    // Set affinity-on-display to exclude window from screenshots
+    HWND hWnd = GetActiveWindow();
+    if (hWnd) {
+        // SetWindowDisplayAffinity requires Windows 7+
+        typedef BOOL (WINAPI *SWDA)(HWND, DWORD);
+        HMODULE u = GetModuleHandleA("user32.dll");
+        if (u) {
+            SWDA p = (SWDA)GetProcAddress(u, "SetWindowDisplayAffinity");
+            if (p) p(hWnd, /*WDA_EXCLUDEFROMCAPTURE*/ 0x00000011);
+        }
+    }
+}
+
+void AntiCheatBypass::disableScreenshotBypass() {
+    HWND hWnd = GetActiveWindow();
+    if (hWnd) {
+        typedef BOOL (WINAPI *SWDA)(HWND, DWORD);
+        HMODULE u = GetModuleHandleA("user32.dll");
+        if (u) {
+            SWDA p = (SWDA)GetProcAddress(u, "SetWindowDisplayAffinity");
+            if (p) p(hWnd, 0 /*WDA_NONE*/);
+        }
+    }
+}
+
+void AntiCheatBypass::enableNVIDIAProtection() {
+    // Placeholder for NVIDIA hooks
+}
+
+void AntiCheatBypass::disableNVIDIAProtection() {
+    // Placeholder
+}
+
+void AntiCheatBypass::hideFromNVIDIA() {
+    // Placeholder
 }

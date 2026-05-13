@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 SelfDestruct::SelfDestruct() : initialized(false) {
 }
@@ -87,9 +88,10 @@ void SelfDestruct::cleanFiles() {
     
     // Delete config directory
     std::string configDir = "./configs/";
+    std::string configDirNull = configDir + '\0';
     SHFILEOPSTRUCTA fileOp = {};
     fileOp.wFunc = FO_DELETE;
-    fileOp.pFrom = (configDir + "\0").c_str();
+    fileOp.pFrom = configDirNull.c_str();
     fileOp.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
     SHFileOperationA(&fileOp);
 }
@@ -118,28 +120,31 @@ void SelfDestruct::cleanLogs() {
 
 void SelfDestruct::secureDeleteFile(const std::string& path) {
     // Securely delete file by overwriting with random data
-    std::ifstream check(path);
-    if (!check.good()) return;
-    check.close();
+    DWORD fileSize = 0;
+    HANDLE hFile = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) return;
+    fileSize = GetFileSize(hFile, nullptr);
+    CloseHandle(hFile);
     
-    std::fstream file(path, std::ios::in | std::ios::out | std::ios::binary);
-    if (file.is_open()) {
-        // Get file size
-        file.seekg(0, std::ios::end);
-        size_t fileSize = file.tellg();
-        file.seekg(0, std::ios::beg);
+    if (fileSize == 0) {
+        DeleteFileA(path.c_str());
+        return;
+    }
+    
+    // Overwrite with random data (3 passes)
+    for (int pass = 0; pass < 3; pass++) {
+        HANDLE hWrite = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+        if (hWrite == INVALID_HANDLE_VALUE) continue;
         
-        // Overwrite with random data (3 passes)
-        for (int pass = 0; pass < 3; pass++) {
-            file.seekg(0, std::ios::beg);
-            for (size_t i = 0; i < fileSize; i++) {
-                char randomByte = rand() % 256;
-                file.put(randomByte);
-            }
-            file.flush();
+        std::vector<char> buffer(fileSize);
+        for (size_t i = 0; i < fileSize; i++) {
+            buffer[i] = static_cast<char>(rand() % 256);
         }
         
-        file.close();
+        DWORD written = 0;
+        WriteFile(hWrite, buffer.data(), fileSize, &written, nullptr);
+        FlushFileBuffers(hWrite);
+        CloseHandle(hWrite);
     }
     
     // Delete file

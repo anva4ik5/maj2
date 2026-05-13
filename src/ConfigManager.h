@@ -10,7 +10,10 @@ public:
         // Server
         std::string serverHost = "127.0.0.1";
         int serverPort = 8080;
+        std::string serverURL = "https://majcheat-production.up.railway.app";
         std::string sharedKey = "";
+        std::string telegramBotToken = "";
+        std::string adminTelegramID = "";
         
         // General
         bool enableOverlay = true;
@@ -51,6 +54,7 @@ public:
         float recoilAccuracy = 1.0f;
         float recoilRecovery = 1.0f;
         float animReloadSpeed = 1.0f;
+        bool invisibility = false;
         
         // Visuals
         bool enableESP = true;

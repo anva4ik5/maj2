@@ -2,6 +2,9 @@
 #include <string>
 #include "src/GameCheat.h"
 #include "src/ConfigManager.h"
+#include "src/BackendAPI.h"
+#include "src/HWIDManager.h"
+#include "src/AuthFlow.h"
 
 int main(int argc, char* argv[]) {
     std::cout << "GameCheat - Restored Version" << std::endl;
@@ -20,8 +23,24 @@ int main(int argc, char* argv[]) {
     }
     
     std::cout << "Target process: " << targetProcess << std::endl;
-    std::cout << "Server: " << config.getConfig().serverHost << ":" << config.getConfig().serverPort << std::endl;
-    
+    std::cout << "Server: " << config.getConfig().serverURL << std::endl;
+
+    // ===== Authorization (login/register via Telegram code) =====
+    HWIDManager hwidMgr;
+    std::string hwid = hwidMgr.getHWID();
+
+    BackendAPI authApi;
+    authApi.initialize(config.getConfig().serverURL, config.getConfig().sharedKey);
+
+    AuthFlow auth(&authApi, hwid);
+    std::string token, login, telegramId;
+    if (!auth.run(token, login, telegramId)) {
+        std::cerr << "Authorization failed. Exiting." << std::endl;
+        return 1;
+    }
+
+    std::cout << "Authorized as: " << login << " (Telegram: " << telegramId << ")" << std::endl;
+
     // Initialize cheat
     GameCheat cheat;
     if (!cheat.initialize()) {

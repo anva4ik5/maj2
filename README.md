@@ -98,22 +98,36 @@
 
 ## Сборка проекта
 
-### С помощью CMake (рекомендуется)
+### GitHub Actions (автоматическая сборка)
+
+Проект настроен для автоматической сборки через GitHub Actions при каждом push в `main` или `master`. Сборка происходит на `windows-latest` с Visual Studio 2022.
+
+Артефакты (EXE файл) автоматически загружаются в раздел Actions -> Build GameCheat.
+
+### Локальная сборка
+
+#### С помощью CMake (рекомендуется)
 
 ```bash
 cd GameCheat_Restored
 mkdir build
 cd build
-cmake ..
+cmake .. -G "Visual Studio 17 2022" -A x64
 cmake --build . --config Release
 ```
 
-### С помощью Visual Studio
+#### С помощью Visual Studio
 
 1. Откройте папку проекта в Visual Studio
 2. Откройте `CMakeLists.txt`
 3. Выберите "CMake: Configure" из меню
 4. Нажмите "CMake: Build"
+
+### Зависимости
+
+- Windows SDK (входит в Visual Studio Build Tools)
+- DirectX 11 SDK (входит в Windows SDK)
+- Стандартные Windows библиотеки: `d3d11.lib`, `wininet.lib`, `ws2_32.lib`, `iphlpapi.lib`, `psapi.lib`, `shell32.lib`
 
 ## Использование
 

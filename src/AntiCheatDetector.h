@@ -12,6 +12,7 @@ enum class AntiCheatType {
     PUNKBUSTER,
     FAIRFIGHT,
     MAJESTIC,
+    ALT_V,
     UNKNOWN
 };
 
@@ -38,6 +39,7 @@ public:
     bool isBattlEyeRunning();
     bool isVanguardRunning();
     bool isMajesticRunning();
+    bool isAltVRunning();
     
     // Get detected anti-cheat
     AntiCheatInfo getDetectedAntiCheat();

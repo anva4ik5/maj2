@@ -33,5 +33,7 @@ private:
     std::mutex mutex;
     bool connected;
     
+    std::vector<std::thread> asyncThreads;
+    
     std::string readResponse(HINTERNET hRequest);
 };

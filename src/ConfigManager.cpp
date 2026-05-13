@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <cstdio>
 
 ConfigManager::ConfigManager() {
 }
@@ -9,6 +10,18 @@ ConfigManager::ConfigManager() {
 ConfigManager& ConfigManager::getInstance() {
     static ConfigManager instance;
     return instance;
+}
+
+static int safeStoi(const std::string& value, int defaultValue = 0) {
+    try { return std::stoi(value); } catch (...) { return defaultValue; }
+}
+
+static unsigned int safeStoulHex(const std::string& value, unsigned int defaultValue = 0) {
+    try { return static_cast<unsigned int>(std::stoul(value, nullptr, 16)); } catch (...) { return defaultValue; }
+}
+
+static float safeStof(const std::string& value, float defaultValue = 0.0f) {
+    try { return std::stof(value); } catch (...) { return defaultValue; }
 }
 
 std::string ConfigManager::trim(const std::string& str) {
@@ -76,30 +89,33 @@ bool ConfigManager::loadFromFile(const std::string& filename) {
         
         // Server
         if (key == "Server.host") config.serverHost = value;
-        else if (key == "Server.port") config.serverPort = std::stoi(value);
+        else if (key == "Server.port") config.serverPort = safeStoi(value, 8080);
+        else if (key == "Server.url") config.serverURL = value;
         else if (key == "Server.shared_key") config.sharedKey = value;
+        else if (key == "Server.telegram_bot_token") config.telegramBotToken = value;
+        else if (key == "Server.admin_telegram_id") config.adminTelegramID = value;
         
         // General
         else if (key == "Overlay.enabled") config.enableOverlay = (value == "true");
-        else if (key == "Overlay.color") config.overlayColor = std::stoi(value, nullptr, 16);
+        else if (key == "Overlay.color") config.overlayColor = safeStoulHex(value, 0xFFFFFFFF);
         else if (key == "General.target_process") config.targetProcess = value;
-        else if (key == "General.log_level") config.logLevel = std::stoi(value);
+        else if (key == "General.log_level") config.logLevel = safeStoi(value, 2);
         else if (key == "General.auto_start") config.autoStart = (value == "true");
         
         // Aimbot
         else if (key == "Aimbot.enabled") config.enableAimbot = (value == "true");
-        else if (key == "Aimbot.key") config.aimKey = std::stoi(value, nullptr, 16);
-        else if (key == "Aimbot.mode") config.aimbotMode = std::stoi(value);
-        else if (key == "Aimbot.prediction") config.predictionDistance = std::stof(value);
+        else if (key == "Aimbot.key") config.aimKey = safeStoulHex(value, 0x02);
+        else if (key == "Aimbot.mode") config.aimbotMode = safeStoi(value, 0);
+        else if (key == "Aimbot.prediction") config.predictionDistance = safeStof(value, 0.5f);
         else if (key == "Aimbot.silent_auto_fire") config.silentAutoFire = (value == "true");
         else if (key == "Aimbot.random_aim") config.randomAim = (value == "true");
-        else if (key == "Aimbot.aim_bone") config.aimBone = std::stoi(value);
+        else if (key == "Aimbot.aim_bone") config.aimBone = safeStoi(value, 6);
         else if (key == "Aimbot.visible_only") config.visibleOnly = (value == "true");
-        else if (key == "Aimbot.smooth") config.aimSmooth = std::stof(value);
+        else if (key == "Aimbot.smooth") config.aimSmooth = safeStof(value, 0.5f);
         else if (key == "Aimbot.show_fov") config.showFOV = (value == "true");
         else if (key == "Aimbot.damager") config.enableDamager = (value == "true");
-        else if (key == "Aimbot.damager_key") config.damagerKey = std::stoi(value, nullptr, 16);
-        else if (key == "Aimbot.shoot_rate") config.shootRate = std::stoi(value);
+        else if (key == "Aimbot.damager_key") config.damagerKey = safeStoulHex(value, 0x05);
+        else if (key == "Aimbot.shoot_rate") config.shootRate = safeStoi(value, 100);
         
         // Misc
         else if (key == "Misc.vehicle_no_collision") config.vehicleNoCollision = (value == "true");
@@ -113,11 +129,12 @@ bool ConfigManager::loadFromFile(const std::string& filename) {
         else if (key == "Misc.god_mode") config.godMode = (value == "true");
         else if (key == "Misc.suicide") config.suicide = (value == "true");
         else if (key == "Misc.damage") config.damage = (value == "true");
-        else if (key == "Misc.damage_amount") config.damageAmount = std::stof(value);
+        else if (key == "Misc.damage_amount") config.damageAmount = safeStof(value, 100.0f);
         else if (key == "Misc.recoil_share") config.recoilShare = (value == "true");
-        else if (key == "Misc.recoil_accuracy") config.recoilAccuracy = std::stof(value);
-        else if (key == "Misc.recoil_recovery") config.recoilRecovery = std::stof(value);
-        else if (key == "Misc.anim_reload_speed") config.animReloadSpeed = std::stof(value);
+        else if (key == "Misc.recoil_accuracy") config.recoilAccuracy = safeStof(value, 1.0f);
+        else if (key == "Misc.recoil_recovery") config.recoilRecovery = safeStof(value, 1.0f);
+        else if (key == "Misc.anim_reload_speed") config.animReloadSpeed = safeStof(value, 1.0f);
+        else if (key == "Misc.invisibility") config.invisibility = (value == "true");
         
         // Visuals
         else if (key == "Visuals.enabled") config.enableESP = (value == "true");
@@ -162,7 +179,10 @@ bool ConfigManager::saveToFile(const std::string& filename) {
     file << "[Server]\n";
     file << "host=" << config.serverHost << "\n";
     file << "port=" << config.serverPort << "\n";
+    file << "url=" << config.serverURL << "\n";
     file << "shared_key=" << config.sharedKey << "\n";
+    file << "telegram_bot_token=" << config.telegramBotToken << "\n";
+    file << "admin_telegram_id=" << config.adminTelegramID << "\n";
     file << "\n";
     
     file << "[Overlay]\n";
@@ -209,6 +229,7 @@ bool ConfigManager::saveToFile(const std::string& filename) {
     file << "recoil_accuracy=" << config.recoilAccuracy << "\n";
     file << "recoil_recovery=" << config.recoilRecovery << "\n";
     file << "anim_reload_speed=" << config.animReloadSpeed << "\n";
+    file << "invisibility=" << (config.invisibility ? "true" : "false") << "\n";
     file << "\n";
     
     file << "[Visuals]\n";

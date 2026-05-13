@@ -10,39 +10,34 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
-      
-    - name: Setup vcpkg
-      run: |
-        git clone https://github.com/Microsoft/vcpkg
-        cd vcpkg
-        .\bootstrap-vcpkg.bat
-        
-    - name: Install dependencies
-      run: |
-        cd vcpkg
-        .\vcpkg install curl:x64-windows
-        .\vcpkg install nlohmann-json:x64-windows
-        
-    - name: Setup CMake
-      uses: jwlawson/actions-setup-cmake@v2
-      
+      uses: actions/checkout@v4
+
+    - name: Add MSVC to PATH
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
     - name: Configure CMake
       run: |
-        mkdir build
-        cd build
-        cmake ..
-        
-    - name: Build
+        cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build Release
       run: |
-        cd build
-        cmake --build . --config Release
-        
+        cmake --build build --config Release --verbose
+
+    - name: List output files
+      run: |
+        Get-ChildItem -Path build\bin -Recurse -ErrorAction SilentlyContinue
+        Get-ChildItem -Path build\Release -Recurse -ErrorAction SilentlyContinue
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: GameCheat-EXE
-        path: build/bin/Release/GameCheat_Restored.exe
+        path: |
+          build/bin/Release/GameCheat_Restored.exe
+          build/Release/GameCheat_Restored.exe
+        if-no-files-found: warn

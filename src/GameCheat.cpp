@@ -1,6 +1,10 @@
 #include "GameCheat.h"
+#include "Obfuscator.h"
 #include <iostream>
+#include <vector>
+#include <string>
 #include <TlHelp32.h>
+#include <intrin.h>
 
 GameCheat::GameCheat() 
     : targetProcess(nullptr), targetWindow(nullptr), running(false), config(ConfigManager::getInstance()) {
@@ -34,17 +38,59 @@ GameCheat::~GameCheat() {
     }
 }
 
+// Split comma-separated process list. Trim whitespace.
+static std::vector<std::string> splitProcessList(const std::string& s) {
+    std::vector<std::string> out;
+    std::string cur;
+    for (char c : s) {
+        if (c == ',' || c == ';') {
+            // trim
+            while (!cur.empty() && (cur.front() == ' ' || cur.front() == '\t')) cur.erase(cur.begin());
+            while (!cur.empty() && (cur.back()  == ' ' || cur.back()  == '\t')) cur.pop_back();
+            if (!cur.empty()) out.push_back(cur);
+            cur.clear();
+        } else {
+            cur += c;
+        }
+    }
+    while (!cur.empty() && (cur.front() == ' ' || cur.front() == '\t')) cur.erase(cur.begin());
+    while (!cur.empty() && (cur.back()  == ' ' || cur.back()  == '\t')) cur.pop_back();
+    if (!cur.empty()) out.push_back(cur);
+    return out;
+}
+
 bool GameCheat::findTargetProcess() {
     std::string processName = config.getConfig().targetProcess;
-    targetProcess = memoryManager.getProcessHandle(processName);
-    
-    if (!targetProcess) {
-        std::cerr << "Failed to find process: " << processName << std::endl;
-        return false;
+
+    // 'auto' or empty -> try all known targets (alt:V, Majestic, GTA V)
+    std::vector<std::string> candidates;
+    if (processName == "auto" || processName.empty()) {
+        candidates = {
+            "altv.exe",            // alt:V client
+            "altv-launcher.exe",   // alt:V launcher
+            "GTA5.exe",            // GTA V (Majestic, RAGEMP, etc.)
+            "rust.exe"
+        };
+    } else if (processName.find(',') != std::string::npos || processName.find(';') != std::string::npos) {
+        candidates = splitProcessList(processName);
+    } else {
+        candidates = { processName };
     }
-    
-    std::cout << "Found target process: " << processName << std::endl;
-    return true;
+
+    for (const auto& name : candidates) {
+        targetProcess = memoryManager.getProcessHandle(name);
+        if (targetProcess) {
+            // Persist actual matched name for the rest of init flow
+            config.getConfig().targetProcess = name;
+            std::cout << "Found target process: " << name << std::endl;
+            return true;
+        }
+    }
+
+    std::cerr << "Failed to find process. Tried:";
+    for (const auto& n : candidates) std::cerr << " " << n;
+    std::cerr << std::endl;
+    return false;
 }
 
 bool GameCheat::findTargetWindow() {
@@ -97,7 +143,24 @@ bool GameCheat::findTargetWindow() {
 bool GameCheat::initialize() {
     std::cout << "Initializing GameCheat..." << std::endl;
     
+    // Anti-debug check before any cheat operations
+    if (IsDebuggerPresent()) {
+        std::cerr << "Debugger detected. Exiting for security." << std::endl;
+        return false;
+    }
+    
+    // Clear PEB BeingDebugged flag
+    #ifdef _WIN64
+    PBYTE peb = (PBYTE)__readgsqword(0x60);
+    *(peb + 0x02) = 0;
+    #else
+    PBYTE peb = (PBYTE)__readfsdword(0x30);
+    *(peb + 0x02) = 0;
+    #endif
+    
     // Load configuration
+    std::string configFile = Obfuscator::deobfuscate(
+        Obfuscator::xorString("\x1e\x0f\x1a\x1c\x00\x0b\x1e", "X"), "X");
     if (!config.loadFromFile("config.ini")) {
         std::cout << "Using default configuration" << std::endl;
     }
@@ -194,7 +257,45 @@ bool GameCheat::initialize() {
         eventLogger->logPlayerAction("Toggle menu");
     });
     
+    // Invisibility toggle
+    keyBindManager->addBind("invisibility", VK_F6, BindType::TOGGLE, [this]() {
+        misc->setInvisibility(!misc->getInvisibilityState());
+        eventLogger->logPlayerAction(misc->getInvisibilityState() ? "Invisibility ON" : "Invisibility OFF");
+    });
+    
     antiCheatBypass->applyBypasses();
+    
+    // Initialize HWID and auth
+    hwidManager->initialize();
+    
+    AuthConfig authConfig;
+    authConfig.telegramBotToken = config.getConfig().telegramBotToken;
+    authConfig.adminTelegramID = config.getConfig().adminTelegramID;
+    // Use full URL for Railway deployment (supports https://host)
+    authConfig.apiEndpoint = config.getConfig().serverURL;
+    authManager->initialize(authConfig);
+    
+    // Initialize backend API
+    backendAPI->initialize(config.getConfig().serverURL, config.getConfig().sharedKey);
+    
+    // Initialize Telegram bot
+    telegramBot->initialize(authConfig.telegramBotToken, authConfig.adminTelegramID);
+    
+    // Initialize admin detector
+    adminDetector->initialize();
+    adminDetector->setAutoDisableOnAdmin(config.getConfig().autoDisableOnAdmin);
+    
+    // Initialize OBS bypass
+    obsBypass->initialize();
+    if (config.getConfig().obsBypassEnabled) {
+        obsBypass->enable();
+    }
+    
+    // Initialize self-destruct
+    selfDestruct->initialize();
+    
+    // Initialize UI renderer
+    uiRenderer->initialize();
     
     // Apply specific bypasses based on detected anti-cheat
     if (detectedAC.detected) {
@@ -207,6 +308,9 @@ bool GameCheat::initialize() {
                 break;
             case AntiCheatType::MAJESTIC:
                 antiCheatBypass->applyMajesticBypasses();
+                break;
+            case AntiCheatType::ALT_V:
+                antiCheatBypass->applyAltVBypasses();
                 break;
             default:
                 antiCheatBypass->applyGeneralBypasses();
@@ -275,9 +379,8 @@ void GameCheat::cheatLoop() {
 
 void GameCheat::renderLoop() {
     while (running && overlay->isInitialized()) {
-        // Render visuals (ESP, etc.)
+        overlay->syncWindowPosition();
         visuals->render();
-        
         Sleep(16);
     }
 }

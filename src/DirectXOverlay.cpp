@@ -1,21 +1,54 @@
 #include "DirectXOverlay.h"
 #include <iostream>
 
-DirectXOverlay::DirectXOverlay() 
-    : device(nullptr), context(nullptr), swapChain(nullptr), 
+DirectXOverlay::DirectXOverlay()
+    : device(nullptr), context(nullptr), swapChain(nullptr),
       renderTargetView(nullptr), blendState(nullptr),
-      windowHandle(nullptr), width(0), height(0), initialized(false) {
+      windowHandle(nullptr), targetWindow(nullptr), width(0), height(0), initialized(false) {
 }
 
 DirectXOverlay::~DirectXOverlay() {
     cleanup();
 }
 
+static LRESULT CALLBACK OverlayWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_NCHITTEST) return HTTRANSPARENT;
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+static HWND CreateOverlayWindow(HWND target) {
+    WNDCLASSEX wc = {};
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.lpfnWndProc = OverlayWndProc;
+    wc.hInstance = GetModuleHandle(nullptr);
+    wc.lpszClassName = "DXOverlayWindow";
+    RegisterClassEx(&wc);
+
+    RECT rc;
+    GetWindowRect(target, &rc);
+
+    HWND hwnd = CreateWindowEx(
+        WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_NOACTIVATE,
+        wc.lpszClassName,
+        "Overlay",
+        WS_POPUP,
+        rc.left, rc.top,
+        rc.right - rc.left, rc.bottom - rc.top,
+        nullptr, nullptr, wc.hInstance, nullptr
+    );
+
+    if (hwnd) {
+        SetLayeredWindowAttributes(hwnd, RGB(0, 0, 0), 0, LWA_COLORKEY);
+        ShowWindow(hwnd, SW_SHOW);
+    }
+    return hwnd;
+}
+
 bool DirectXOverlay::createBlendState() {
     D3D11_BLEND_DESC blendDesc = {};
     blendDesc.AlphaToCoverageEnable = FALSE;
     blendDesc.IndependentBlendEnable = FALSE;
-    
+
     blendDesc.RenderTarget[0].BlendEnable = TRUE;
     blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
     blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
@@ -24,7 +57,7 @@ bool DirectXOverlay::createBlendState() {
     blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
     blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    
+
     HRESULT hr = device->CreateBlendState(&blendDesc, &blendState);
     return SUCCEEDED(hr);
 }
@@ -32,32 +65,39 @@ bool DirectXOverlay::createBlendState() {
 bool DirectXOverlay::setupRenderTarget() {
     ID3D11Texture2D* backBuffer = nullptr;
     HRESULT hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
-    
+
     if (FAILED(hr)) {
         std::cerr << "Failed to get back buffer" << std::endl;
         return false;
     }
-    
+
     hr = device->CreateRenderTargetView(backBuffer, nullptr, &renderTargetView);
     backBuffer->Release();
-    
+
     if (FAILED(hr)) {
         std::cerr << "Failed to create render target view" << std::endl;
         return false;
     }
-    
+
     return true;
 }
 
 bool DirectXOverlay::initialize(HWND targetWindow) {
-    windowHandle = targetWindow;
-    
+    this->targetWindow = targetWindow;
+
     // Get window dimensions
     RECT rect;
     GetWindowRect(targetWindow, &rect);
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
-    
+
+    // Create our own overlay window in this process
+    windowHandle = CreateOverlayWindow(targetWindow);
+    if (!windowHandle) {
+        std::cerr << "Failed to create overlay window" << std::endl;
+        return false;
+    }
+
     // Create swap chain description
     DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
     swapChainDesc.BufferCount = 1;
@@ -67,11 +107,11 @@ bool DirectXOverlay::initialize(HWND targetWindow) {
     swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
     swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.OutputWindow = targetWindow;
+    swapChainDesc.OutputWindow = windowHandle;
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.Windowed = TRUE;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-    
+
     // Create device and swap chain
     D3D_FEATURE_LEVEL featureLevel;
     HRESULT hr = D3D11CreateDeviceAndSwapChain(
@@ -79,26 +119,36 @@ bool DirectXOverlay::initialize(HWND targetWindow) {
         nullptr, 0, D3D11_SDK_VERSION,
         &swapChainDesc, &swapChain, &device, &featureLevel, &context
     );
-    
+
     if (FAILED(hr)) {
         std::cerr << "Failed to create D3D11 device: " << std::hex << hr << std::endl;
+        cleanup();
         return false;
     }
-    
+
     // Setup render target
     if (!setupRenderTarget()) {
         cleanup();
         return false;
     }
-    
+
     // Create blend state for transparency
     if (!createBlendState()) {
         std::cerr << "Failed to create blend state" << std::endl;
-        // Continue anyway - transparency won't work
     }
-    
+
     initialized = true;
     return true;
+}
+
+void DirectXOverlay::syncWindowPosition() {
+    if (!targetWindow || !windowHandle) return;
+    RECT rc;
+    if (GetWindowRect(targetWindow, &rc)) {
+        SetWindowPos(windowHandle, HWND_TOPMOST, rc.left, rc.top,
+                     rc.right - rc.left, rc.bottom - rc.top,
+                     SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    }
 }
 
 void DirectXOverlay::cleanup() {
@@ -107,13 +157,18 @@ void DirectXOverlay::cleanup() {
     if (swapChain) swapChain->Release();
     if (context) context->Release();
     if (device) device->Release();
-    
+
     blendState = nullptr;
     renderTargetView = nullptr;
     swapChain = nullptr;
     context = nullptr;
     device = nullptr;
-    
+
+    if (windowHandle) {
+        DestroyWindow(windowHandle);
+        windowHandle = nullptr;
+    }
+
     initialized = false;
 }
 

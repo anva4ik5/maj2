@@ -85,7 +85,7 @@ void Visuals::renderDistance(Entity* entity) {
     Vec2 screenPos = worldToScreen(entity->position);
     if (screenPos.x < 0 || screenPos.y < 0) return;
     
-    float dist = entity->position.distanceTo(Vector3()); // Should be local player position
+    float dist = entity->position.distanceTo(localPlayerPosition);
     std::string distText = std::to_string((int)dist) + "m";
     
     overlay->drawText(distText, {screenPos.x, screenPos.y - 20}, {1, 1, 1, 1}, 14.0f);

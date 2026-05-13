@@ -30,6 +30,11 @@ public:
     void bypassBEIntegrity();
     void bypassBEMemoryScan();
     
+    // alt:V specific
+    void applyAltVBypasses();
+    void bypassAltVIntegrity();
+    void bypassAltVMemoryScan();
+    
     // General anti-cheat bypasses
     void applyGeneralBypasses();
     

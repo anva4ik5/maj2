@@ -71,11 +71,17 @@ std::string NetworkClient::sendHTTPRequest(const std::string& url, const std::st
         return "";
     }
     
+    BOOL sendResult = FALSE;
     if (!data.empty()) {
         const char* headers = "Content-Type: application/json\r\n";
-        HttpSendRequestA(hRequest, headers, -1, (LPVOID)data.c_str(), data.length());
+        sendResult = HttpSendRequestA(hRequest, headers, -1, (LPVOID)data.c_str(), data.length());
     } else {
-        HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
+        sendResult = HttpSendRequestA(hRequest, nullptr, 0, nullptr, 0);
+    }
+    
+    if (!sendResult) {
+        InternetCloseHandle(hRequest);
+        return "";
     }
     
     std::string response = readResponse(hRequest);
@@ -93,12 +99,11 @@ std::string NetworkClient::sendPOSTRequest(const std::string& url, const std::st
 }
 
 bool NetworkClient::sendAsyncRequest(const std::string& url, const std::string& data, ResponseCallback callback) {
-    // Simple async implementation using thread
-    std::thread([this, url, data, callback]() {
+    std::lock_guard<std::mutex> lock(mutex);
+    asyncThreads.emplace_back([this, url, data, callback]() {
         std::string response = sendHTTPRequest(url, data);
-        callback(response);
-    }).detach();
-    
+        if (callback) callback(response);
+    });
     return true;
 }
 

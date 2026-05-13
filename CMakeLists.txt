@@ -4,6 +4,15 @@ project(GameCheat_Restored)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Windows-specific settings
+if(WIN32)
+    # Static runtime linking (no VC++ redistributables needed)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    
+    # Hide console window in Release builds (optional: comment out for debug console)
+    # set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+endif()
+
 # Find required packages
 find_package(Threads REQUIRED)
 
@@ -33,6 +42,8 @@ set(SOURCES
     src/AuthManager.cpp
     src/TelegramBot.cpp
     src/BackendAPI.cpp
+    src/Obfuscator.cpp
+    src/AuthFlow.cpp
 )
 
 # Header files
@@ -60,27 +71,53 @@ set(HEADERS
     src/AuthManager.h
     src/TelegramBot.h
     src/BackendAPI.h
+    src/Obfuscator.h
+    src/AuthFlow.h
 )
 
 # Create executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+# Compiler warnings (treat as errors for critical issues)
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive-)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
+endif()
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE
     d3d11.lib
     d3dcompiler.lib
+    dxgi.lib
     wininet.lib
     ws2_32.lib
+    iphlpapi.lib
+    psapi.lib
+    shell32.lib
+    shlwapi.lib
     Threads::Threads
 )
 
 # Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin"
 )
 
 # Copy config file to output directory
 if(EXISTS ${CMAKE_SOURCE_DIR}/config.ini)
     configure_file(config.ini ${CMAKE_BINARY_DIR}/bin/config.ini COPYONLY)
+endif()
+
+# Copy scripts directory if exists
+if(EXISTS ${CMAKE_SOURCE_DIR}/scripts)
+    file(COPY ${CMAKE_SOURCE_DIR}/scripts DESTINATION ${CMAKE_BINARY_DIR}/bin)
 endif()

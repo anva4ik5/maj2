@@ -21,6 +21,20 @@ struct APIResponse {
     std::string message;
     std::string data;
     int statusCode;
+    // Auth-specific extracted fields
+    std::string token;
+    std::string sessionId;
+    bool requireTwoFA = false;
+};
+
+struct AuthResult {
+    bool success = false;
+    bool requireCode = false;
+    std::string token;
+    std::string sessionId;
+    std::string login;
+    std::string telegramId;
+    std::string message;
 };
 
 class BackendAPI {
@@ -41,6 +55,15 @@ public:
     APIResponse registerUser(const std::string& telegramID, const std::string& username, const std::string& hwid);
     APIResponse loginUser(const std::string& telegramID, const std::string& hwid);
     APIResponse getUserInfo(const std::string& telegramID);
+    
+    // ========== Auth (login + Telegram code) ==========
+    AuthResult registerStart(const std::string& login, const std::string& password,
+                             const std::string& telegramID, const std::string& hwid);
+    AuthResult registerConfirm(const std::string& sessionId, const std::string& code);
+    AuthResult login(const std::string& login, const std::string& password, const std::string& hwid);
+    AuthResult loginConfirm(const std::string& sessionId, const std::string& code);
+    AuthResult verifyToken(const std::string& token, const std::string& hwid);
+    bool logout(const std::string& token);
     
     // Admin operations
     APIResponse createLicense(const std::string& adminID, const std::string& userID, int durationDays);

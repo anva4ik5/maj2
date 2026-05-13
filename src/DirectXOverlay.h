@@ -43,11 +43,13 @@ public:
     void drawCircle(Vec2 center, float radius, Color color = Color(), float thickness = 1.0f);
     
     void clearScreen(Color color = Color(0, 0, 0, 0));
+    void syncWindowPosition();
     
     bool isInitialized() const { return initialized; }
     
     int getWidth() const { return width; }
     int getHeight() const { return height; }
+    HWND getWindowHandle() const { return windowHandle; }
     
 private:
     ID3D11Device* device;
@@ -55,7 +57,7 @@ private:
     IDXGISwapChain* swapChain;
     ID3D11RenderTargetView* renderTargetView;
     ID3D11BlendState* blendState;
-    
+    HWND targetWindow;
     HWND windowHandle;
     int width, height;
     bool initialized;
