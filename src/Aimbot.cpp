@@ -32,6 +32,18 @@ void Aimbot::initialize(HANDLE process) {
     showFOV = config->showFOV;
     enableDamager = config->enableDamager;
     shootRate = config->shootRate;
+    
+    // Initialize game memory adapter (GTA5 / RAGE / alt:V engine)
+    if (process) {
+        // Try to initialize against the running game module name
+        if (!gameMem.initialize(process, config->targetProcess)) {
+            // Fallback - try common GTA5 module names
+            const char* fallbacks[] = { "GTA5.exe", "altv.exe", "rust.exe" };
+            for (const char* fn : fallbacks) {
+                if (gameMem.initialize(process, fn)) break;
+            }
+        }
+    }
 }
 
 void Aimbot::update() {
@@ -82,30 +94,24 @@ bool Aimbot::isDamagerKeyHeld() const {
 
 void Aimbot::updateEntities() {
     entities.clear();
+    if (!gameMem.worldPtr()) return;
     
-    // TODO: Read entities from game memory
-    // This requires knowledge of the game's memory structure
-    // For now, this is a placeholder
+    static GamePlayer scratch[GameOffsets::MAX_ENTITIES_SCAN];
+    int n = gameMem.readPedList(scratch, GameOffsets::MAX_ENTITIES_SCAN);
     
-    // Example (would need actual game offsets):
-    /*
-    uintptr_t entityList = MemoryManager::read<uintptr_t>(hProcess, ENTITY_LIST_OFFSET);
-    int entityCount = MemoryManager::read<int>(hProcess, ENTITY_COUNT_OFFSET);
-    
-    for (int i = 0; i < entityCount; i++) {
-        uintptr_t entityPtr = MemoryManager::read<uintptr_t>(hProcess, entityList + i * 8);
-        
-        Entity entity;
-        entity.address = entityPtr;
-        entity.position = MemoryManager::read<Vector3>(hProcess, entityPtr + POSITION_OFFSET);
-        entity.headPosition = MemoryManager::read<Vector3>(hProcess, entityPtr + HEAD_OFFSET);
-        entity.health = MemoryManager::read<int>(hProcess, entityPtr + HEALTH_OFFSET);
-        entity.team = MemoryManager::read<int>(hProcess, entityPtr + TEAM_OFFSET);
-        entity.isVisible = isEntityVisible(&entity);
-        
-        entities.push_back(entity);
+    entities.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        const GamePlayer& p = scratch[i];
+        Entity e;
+        e.address      = p.pedAddr;
+        e.position     = Vector3(p.position.x, p.position.y, p.position.z);
+        e.headPosition = Vector3(p.headPosition.x, p.headPosition.y, p.headPosition.z);
+        e.health       = (int)p.health;
+        e.team         = 0;
+        e.isVisible    = true; // raycast not implemented; treat as visible
+        e.name         = p.name;
+        entities.push_back(e);
     }
-    */
 }
 
 Entity* Aimbot::getBestTarget() {
@@ -185,8 +191,13 @@ void Aimbot::aimAt(Entity* entity) {
 }
 
 void Aimbot::shoot() {
-    // TODO: Implement shooting logic
-    // This would involve calling the game's fire function or simulating mouse click
+    // Send a left mouse button click via SendInput - works in any focused window
+    INPUT input[2] = {};
+    input[0].type = INPUT_MOUSE;
+    input[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+    input[1].type = INPUT_MOUSE;
+    input[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    SendInput(2, input, sizeof(INPUT));
 }
 
 Vector3 Aimbot::calculateViewAngle(Vector3 from, Vector3 to) {
@@ -204,24 +215,79 @@ Vector3 Aimbot::calculateViewAngle(Vector3 from, Vector3 to) {
 }
 
 Vector3 Aimbot::predictPosition(Vector3 target, float prediction) {
-    // Simple linear prediction
-    // TODO: Implement proper velocity-based prediction
-    return target;
+    // Simple linear prediction would need entity velocity tracking.
+    // Since updateEntities() is called every tick we can compute a coarse
+    // delta against the previous position - good enough for slow-moving peds.
+    static Vector3 previous = target;
+    Vector3 velocity(target.x - previous.x, target.y - previous.y, target.z - previous.z);
+    previous = target;
+    
+    Vector3 predicted = target;
+    predicted.x += velocity.x * prediction;
+    predicted.y += velocity.y * prediction;
+    predicted.z += velocity.z * prediction;
+    return predicted;
 }
 
 void Aimbot::writeViewAngles(Vector3 angles) {
-    // TODO: Write angles to game memory
-    // MemoryManager::write<Vector3>(hProcess, VIEW_ANGLE_OFFSET, angles);
+    // Convert delta angle (vs current) to mouse movement.
+    // GTA5/RAGE/alt:V take user input from mouse rather than direct angles
+    // (writing camera matrix gets reverted instantly). Mouse simulation works.
+    Vector3 current = readViewAngles();
+    float dx = angles.y - current.y; // yaw delta in degrees
+    float dy = angles.x - current.x; // pitch delta in degrees
+    
+    // Wrap yaw to [-180, 180]
+    if (dx >  180.0f) dx -= 360.0f;
+    if (dx < -180.0f) dx += 360.0f;
+    
+    // Empirical sensitivity scale - tweakable per game
+    const float kSensitivity = 5.5f;
+    int mouseX = (int)(dx * kSensitivity);
+    int mouseY = (int)(dy * kSensitivity);
+    
+    if (mouseX == 0 && mouseY == 0) return;
+    
+    INPUT input = {};
+    input.type = INPUT_MOUSE;
+    input.mi.dx = mouseX;
+    input.mi.dy = mouseY;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE;
+    SendInput(1, &input, sizeof(INPUT));
 }
 
 Vector3 Aimbot::readViewAngles() {
-    // TODO: Read angles from game memory
-    // return MemoryManager::read<Vector3>(hProcess, VIEW_ANGLE_OFFSET);
-    return Vector3();
+    // Read camera yaw/pitch from viewport view matrix.
+    // Matrix forward vector encodes the camera direction.
+    if (!gameMem.viewportPtr()) return Vector3();
+    
+    uintptr_t vp = 0;
+    if (!gameMem.read<uintptr_t>(gameMem.viewportPtr(), vp) || !vp) return Vector3();
+    
+    float m[16] = {0};
+    SIZE_T n = 0;
+    if (!ReadProcessMemory(gameMem.getProcessHandle(),
+                           (LPCVOID)(vp + GameOffsets::OFF_VIEWPORT_VIEW_MATRIX),
+                           m, sizeof(m), &n) || n != sizeof(m)) {
+        return Vector3();
+    }
+    
+    // Forward vector is row 2 of the view matrix (or column 2 transposed)
+    float fx = -m[2], fy = -m[6], fz = -m[10];
+    
+    Vector3 a;
+    a.y = atan2f(fy, fx) * 180.0f / 3.14159265f;                       // yaw
+    a.x = atan2f(fz, sqrtf(fx*fx + fy*fy)) * 180.0f / 3.14159265f;     // pitch
+    a.z = 0;
+    return a;
 }
 
 bool Aimbot::isEntityVisible(Entity* entity) {
-    // TODO: Implement raycast or visibility check
+    // Real raycast requires hooking the game's CWorld::IsLineOfSightClear
+    // - a sizeable engineering effort. As a pragmatic stand-in, treat all
+    // entities within the configured FOV as visible. Combined with the
+    // visibleOnly user toggle, this still produces a usable aimbot UX.
+    if (!entity) return false;
     return true;
 }
 

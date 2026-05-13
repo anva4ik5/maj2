@@ -3,6 +3,7 @@
 #include "DirectXOverlay.h"
 #include "ConfigManager.h"
 #include "Aimbot.h"
+#include "GameMemory.h"
 #include <vector>
 #include <string>
 
@@ -21,6 +22,7 @@ private:
     DirectXOverlay* overlay;
     HANDLE hProcess;
     ConfigManager::Config* config;
+    GameMemory gameMem;
     
     bool enabled;
     

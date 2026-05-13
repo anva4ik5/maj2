@@ -52,6 +52,7 @@ set(SOURCES
     src/BackendAPI.cpp
     src/Obfuscator.cpp
     src/AuthFlow.cpp
+    src/GameMemory.cpp
 )
 
 # Header files
@@ -82,6 +83,8 @@ set(HEADERS
     src/Obfuscator.h
     src/AuthFlow.h
     src/EmbeddedConfig.h
+    src/GameMemory.h
+    src/GameOffsets.h
 )
 
 # Create executable

@@ -12,6 +12,17 @@ void Visuals::initialize(HANDLE process) {
     hProcess = process;
     config = &ConfigManager::getInstance().getConfig();
     
+    // Initialize game memory adapter (shared with Aimbot conceptually but
+    // separate instance is fine - they both just read patterns once)
+    if (process) {
+        if (!gameMem.initialize(process, config->targetProcess)) {
+            const char* fallbacks[] = { "GTA5.exe", "altv.exe", "rust.exe" };
+            for (const char* fn : fallbacks) {
+                if (gameMem.initialize(process, fn)) break;
+            }
+        }
+    }
+    
     // Load config values
     enabled = config->enableESP;
     skeleton = config->skeleton;
@@ -68,9 +79,30 @@ void Visuals::render() {
 
 void Visuals::updateEntities() {
     entities.clear();
+    if (!gameMem.worldPtr()) return;
     
-    // TODO: Read entities from game memory
-    // Similar to Aimbot::updateEntities()
+    // Update local player position for distance/snapline
+    GamePlayer local;
+    if (gameMem.readLocalPlayer(local)) {
+        localPlayerPosition = Vector3(local.position.x, local.position.y, local.position.z);
+    }
+    
+    static GamePlayer scratch[GameOffsets::MAX_ENTITIES_SCAN];
+    int n = gameMem.readPedList(scratch, GameOffsets::MAX_ENTITIES_SCAN);
+    
+    entities.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        const GamePlayer& p = scratch[i];
+        Entity e;
+        e.address      = p.pedAddr;
+        e.position     = Vector3(p.position.x, p.position.y, p.position.z);
+        e.headPosition = Vector3(p.headPosition.x, p.headPosition.y, p.headPosition.z);
+        e.health       = (int)p.health;
+        e.team         = 0;
+        e.isVisible    = true;
+        e.name         = p.name;
+        entities.push_back(e);
+    }
 }
 
 void Visuals::renderSkeleton(Entity* entity) {
@@ -182,9 +214,12 @@ void Visuals::renderVehicles() {
 }
 
 Vec2 Visuals::worldToScreen(Vector3 worldPos) {
-    // TODO: Implement world-to-screen transformation
-    // Requires view matrix and projection matrix from game
-    return Vec2();
+    GameVec3 w(worldPos.x, worldPos.y, worldPos.z);
+    float sx = -1.0f, sy = -1.0f;
+    if (!gameMem.worldToScreen(w, sx, sy)) {
+        return Vec2(-1.0f, -1.0f);
+    }
+    return Vec2(sx, sy);
 }
 
 Color Visuals::getTeamColor(int team) {

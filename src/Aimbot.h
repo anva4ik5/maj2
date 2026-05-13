@@ -2,6 +2,7 @@
 
 #include "MemoryManager.h"
 #include "ConfigManager.h"
+#include "GameMemory.h"
 #include <cstdint>
 #include <vector>
 #include <memory>
@@ -59,6 +60,7 @@ public:
 private:
     HANDLE hProcess;
     ConfigManager::Config* config;
+    GameMemory gameMem;
     
     bool enabled;
     int aimKey;

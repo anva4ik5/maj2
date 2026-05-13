@@ -2,6 +2,7 @@
 
 #include "MemoryManager.h"
 #include "ConfigManager.h"
+#include "GameMemory.h"
 #include <cstdint>
 
 class Misc {
@@ -40,6 +41,7 @@ public:
 private:
     HANDLE hProcess;
     ConfigManager::Config* config;
+    GameMemory gameMem;
     
     bool vehicleNoCollision;
     bool objectsNoCollision;
