@@ -110,7 +110,7 @@ void Visuals::renderWeapons(Entity* entity) {
     Vec2 screenPos = worldToScreen(entity->position);
     if (screenPos.x < 0 || screenPos.y < 0) return;
     
-    overlay->drawText(entity->weapon, {screenPos.x, screenPos.y + 20}, {0.5, 0.5, 1, 1}, 12.0f);
+    overlay->drawText(entity->health, {screenPos.x, screenPos.y + 20}, {0.5, 0.5, 1, 1}, 12.0f);
 }
 
 void Visuals::renderBox(Entity* entity) {
