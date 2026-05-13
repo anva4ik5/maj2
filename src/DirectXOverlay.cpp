@@ -301,9 +301,20 @@ void DirectXOverlay::drawText(const std::string& text, Vec2 position, Color colo
         if (FAILED(hr) || !fmt) return;
     }
     
-    solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
-    D2D1_RECT_F layout = D2D1::RectF(position.x, position.y, position.x + 2000.0f, position.y + size * 1.5f);
-    d2dRenderTarget->DrawText(wtext.c_str(), (UINT32)wtext.size(), fmt, layout, solidBrush);
+    // Use DrawTextLayout to bypass the DrawText/DrawTextW macro collision with GDI.
+    // CreateTextLayout returns a measured layout we can hand to DrawTextLayout directly.
+    IDWriteTextLayout* layout = nullptr;
+    HRESULT hr = dwriteFactory->CreateTextLayout(
+        wtext.c_str(), (UINT32)wtext.size(),
+        fmt, 2000.0f, size * 1.5f, &layout);
+    
+    if (SUCCEEDED(hr) && layout) {
+        solidBrush->SetColor(D2D1::ColorF(color.r, color.g, color.b, color.a));
+        d2dRenderTarget->DrawTextLayout(
+            D2D1::Point2F(position.x, position.y),
+            layout, solidBrush);
+        layout->Release();
+    }
     
     fmt->Release();
 }
