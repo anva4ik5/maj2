@@ -38,6 +38,8 @@ jobs:
       with:
         name: GameCheat-EXE
         path: |
+          build/bin/GameCheat_Restored.exe
           build/bin/Release/GameCheat_Restored.exe
           build/Release/GameCheat_Restored.exe
-        if-no-files-found: warn
+          config.ini
+        if-no-files-found: error
