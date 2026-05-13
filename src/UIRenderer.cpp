@@ -248,17 +248,6 @@ void UIRenderer::renderTabContent() {
         case 5: renderSecuritySection(); break;
     }
 }
-    yOffset += 30;
-    overlay->drawText("[F3] Toggle ESP", {menuPos.x + 10, menuPos.y + yOffset}, {1, 1, 1, 1}, 16.0f);
-    yOffset += 30;
-    overlay->drawText("[F4] Toggle God Mode", {menuPos.x + 10, menuPos.y + yOffset}, {1, 1, 1, 1}, 16.0f);
-    yOffset += 30;
-    overlay->drawText("[F5] Save Config", {menuPos.x + 10, menuPos.y + yOffset}, {1, 1, 1, 1}, 16.0f);
-    yOffset += 30;
-    overlay->drawText("[F6] Load Config", {menuPos.x + 10, menuPos.y + yOffset}, {1, 1, 1, 1}, 16.0f);
-    yOffset += 30;
-    overlay->drawText("[INSERT] Exit", {menuPos.x + 10, menuPos.y + yOffset}, {1, 0, 0, 1}, 16.0f);
-}
 
 void UIRenderer::renderFullMenu() {
     Vec2 menuPos = {50, 50};

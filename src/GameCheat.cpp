@@ -3,7 +3,7 @@
 #include <TlHelp32.h>
 
 GameCheat::GameCheat() 
-    : targetProcess(nullptr), targetWindow(nullptr), running(false) {
+    : targetProcess(nullptr), targetWindow(nullptr), running(false), config(ConfigManager::getInstance()) {
     networkClient = std::make_unique<NetworkClient>();
     overlay = std::make_unique<DirectXOverlay>();
     aimbot = std::make_unique<Aimbot>();

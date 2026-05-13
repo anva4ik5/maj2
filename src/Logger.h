@@ -32,6 +32,8 @@ public:
     std::vector<std::string> getLogs() const;
     void clearLogs();
     
+    std::string getCurrentTime();
+    
 private:
     Logger();
     ~Logger();

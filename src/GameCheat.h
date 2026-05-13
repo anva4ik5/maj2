@@ -63,7 +63,7 @@ private:
     DLLInjector injector;
     std::unique_ptr<NetworkClient> networkClient;
     std::unique_ptr<DirectXOverlay> overlay;
-    ConfigManager config;
+    ConfigManager& config;
     
     // Feature modules
     std::unique_ptr<Aimbot> aimbot;

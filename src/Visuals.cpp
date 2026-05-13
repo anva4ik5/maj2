@@ -95,7 +95,7 @@ void Visuals::renderSnapline(Entity* entity) {
     Vec2 screenPos = worldToScreen(entity->position);
     if (screenPos.x < 0 || screenPos.y < 0) return;
     
-    Vec2 screenCenter = {overlay->getWidth() / 2, overlay->getHeight()};
+    Vec2 screenCenter = {static_cast<float>(overlay->getWidth()) / 2.0f, static_cast<float>(overlay->getHeight())};
     overlay->drawLine(screenCenter, screenPos, {1, 0, 0, 0.5f}, 1.0f);
 }
 
