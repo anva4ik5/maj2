@@ -21,8 +21,18 @@ jobs:
         arch: x64
 
     - name: Configure CMake
+      env:
+        EMBEDDED_API_URL: ${{ secrets.EMBEDDED_API_URL }}
+        EMBEDDED_SHARED_KEY: ${{ secrets.EMBEDDED_SHARED_KEY }}
+        EMBEDDED_BOT_USERNAME: ${{ secrets.EMBEDDED_BOT_USERNAME }}
       run: |
-        cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+        $url = if ($env:EMBEDDED_API_URL) { $env:EMBEDDED_API_URL } else { "https://majcheat-production.up.railway.app" }
+        $key = if ($env:EMBEDDED_SHARED_KEY) { $env:EMBEDDED_SHARED_KEY } else { "" }
+        $bot = if ($env:EMBEDDED_BOT_USERNAME) { $env:EMBEDDED_BOT_USERNAME } else { "" }
+        cmake -B build -S . -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release `
+          "-DEMBEDDED_API_URL=$url" `
+          "-DEMBEDDED_SHARED_KEY=$key" `
+          "-DEMBEDDED_BOT_USERNAME=$bot"
 
     - name: Build Release
       run: |

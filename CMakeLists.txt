@@ -4,6 +4,14 @@ project(GameCheat_Restored)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ============================================================================
+# Embedded config (injected at build time, e.g. from GitHub Actions secrets)
+# Usage: cmake -B build -S . -D EMBEDDED_API_URL=... -D EMBEDDED_SHARED_KEY=...
+# ============================================================================
+set(EMBEDDED_API_URL "https://majcheat-production.up.railway.app" CACHE STRING "Embedded backend URL")
+set(EMBEDDED_SHARED_KEY "" CACHE STRING "Embedded API shared key (use GitHub secret)")
+set(EMBEDDED_BOT_USERNAME "" CACHE STRING "Telegram bot username")
+
 # Windows-specific settings
 if(WIN32)
     # Static runtime linking (no VC++ redistributables needed)
@@ -73,6 +81,7 @@ set(HEADERS
     src/BackendAPI.h
     src/Obfuscator.h
     src/AuthFlow.h
+    src/EmbeddedConfig.h
 )
 
 # Create executable
@@ -89,6 +98,13 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4 /permissive-)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
 endif()
+
+# Inject embedded config as compile-time string defines
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    "EMBEDDED_API_URL=\"${EMBEDDED_API_URL}\""
+    "EMBEDDED_SHARED_KEY=\"${EMBEDDED_SHARED_KEY}\""
+    "EMBEDDED_BOT_USERNAME=\"${EMBEDDED_BOT_USERNAME}\""
+)
 
 # Link libraries
 target_link_libraries(${PROJECT_NAME} 

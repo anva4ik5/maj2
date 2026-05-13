@@ -1,10 +1,18 @@
 #include "ConfigManager.h"
+#include "EmbeddedConfig.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <cstdio>
 
 ConfigManager::ConfigManager() {
+    // Apply compile-time embedded defaults (overridden by config.ini if present)
+    if (config.serverURL.empty() || config.serverURL == "https://majcheat-production.up.railway.app") {
+        config.serverURL = EmbeddedConfig::apiUrl();
+    }
+    if (config.sharedKey.empty()) {
+        config.sharedKey = EmbeddedConfig::sharedKey();
+    }
 }
 
 ConfigManager& ConfigManager::getInstance() {
@@ -90,8 +98,8 @@ bool ConfigManager::loadFromFile(const std::string& filename) {
         // Server
         if (key == "Server.host") config.serverHost = value;
         else if (key == "Server.port") config.serverPort = safeStoi(value, 8080);
-        else if (key == "Server.url") config.serverURL = value;
-        else if (key == "Server.shared_key") config.sharedKey = value;
+        else if (key == "Server.url" && !value.empty()) config.serverURL = value;
+        else if (key == "Server.shared_key" && !value.empty()) config.sharedKey = value;
         else if (key == "Server.telegram_bot_token") config.telegramBotToken = value;
         else if (key == "Server.admin_telegram_id") config.adminTelegramID = value;
         

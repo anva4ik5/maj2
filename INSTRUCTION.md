@@ -44,20 +44,37 @@ cmake --build build --config Release
 
 ## 3. Настройка клиента
 
-Рядом с `GameCheat_Restored.exe` положи `config.ini`:
+### Секреты вшиты в exe (рекомендуется)
+
+`url` и `shared_key` встраиваются в exe **во время сборки** через GitHub Secrets.
+
+В репозитории `anva4ik5/maj2` зайди:
+**Settings → Secrets and variables → Actions → New repository secret**
+
+Добавь:
+| Имя | Значение |
+|---|---|
+| `EMBEDDED_API_URL` | `https://majcheat-production.up.railway.app` |
+| `EMBEDDED_SHARED_KEY` | `<тот же что API_SECRET_KEY в Railway>` |
+| `EMBEDDED_BOT_USERNAME` | `your_bot_username` (опционально) |
+
+После следующего push — exe соберётся со встроенными значениями. Юзеру `config.ini` не нужен (кроме настроек aimbot/visuals).
+
+### config.ini (опционально)
+
+`config.ini` нужен только для пользовательских настроек или переопределения вшитых значений (для тестирования):
 
 ```ini
-[Server]
-url=https://majcheat-production.up.railway.app
-shared_key=<ТОТ_ЖЕ_API_SECRET_KEY_ЧТО_В_RAILWAY>
-
 [General]
-target_process=auto
+target_process=auto    # или altv.exe / GTA5.exe / rust.exe
+
+# Эти поля можно оставить пустыми — будут использоваться вшитые в exe
+[Server]
+url=
+shared_key=
 ```
 
 `target_process=auto` будет искать (в порядке): `altv.exe`, `altv-launcher.exe`, `GTA5.exe`, `rust.exe`.
-
-Можно явно: `target_process=altv.exe` или несколько: `altv.exe,GTA5.exe`.
 
 ---
 
