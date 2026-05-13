@@ -244,8 +244,6 @@ void UIRenderer::renderTabContent() {
         case 5: renderSecuritySection(); break;
     }
 }
-    overlay->drawText("[F1] Toggle Menu", {menuPos.x + 10, menuPos.y + yOffset}, {0.7f, 0.7f, 0.7f, 1}, 14.0f);
-}
 
 void UIRenderer::renderAimbotSection() {
     Vec2 menuPos = {50, 50};
