@@ -9,6 +9,8 @@ public:
     HWIDManager();
     ~HWIDManager();
     
+    void initialize();
+    
     // Get unique hardware ID
     std::string getHWID();
     

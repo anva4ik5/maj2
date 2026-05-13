@@ -15,6 +15,13 @@ UIRenderer::UIRenderer(DirectXOverlay* overlay)
 UIRenderer::~UIRenderer() {
 }
 
+void UIRenderer::initialize() {
+    // Style and tabs already set up in constructor.
+    // This method exists so external code (GameCheat) can hook init explicitly.
+    initializeStyle();
+    initializeTabs();
+}
+
 void UIRenderer::initializeStyle() {
     // Modern dark cyberpunk theme
     backgroundColor = {0.06f, 0.06f, 0.09f, 0.96f};   // Deep dark background

@@ -3,6 +3,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <atomic>
 
 struct TelegramMessage {
     std::string chatID;

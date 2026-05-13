@@ -181,7 +181,7 @@ void Aimbot::aimAt(Entity* entity) {
     // Write angles
     writeViewAngles(smoothedAngle);
     
-    currentTarget = entity;
+    (void)entity; // Target tracking handled via currentTargetIndex
 }
 
 void Aimbot::shoot() {

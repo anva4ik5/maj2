@@ -65,6 +65,7 @@ public:
     UIRenderer(DirectXOverlay* overlay);
     ~UIRenderer();
     
+    void initialize();
     void render();
     void update(float deltaTime);
     void handleMouseInput();

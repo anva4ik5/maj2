@@ -15,6 +15,12 @@ HWIDManager::HWIDManager() {
 HWIDManager::~HWIDManager() {
 }
 
+void HWIDManager::initialize() {
+    if (hwid.empty()) {
+        hwid = generateHWIDHash();
+    }
+}
+
 std::string HWIDManager::getHWID() {
     return hwid;
 }
