@@ -351,6 +351,38 @@ void UIRenderer::renderConfigSection() {
     overlay->drawText("Shared Key: ***", {menuPos.x + 20, menuPos.y + yOffset}, {0.8f, 0.8f, 0.8f, 1}, 12.0f);
 }
 
+void UIRenderer::renderKeyBindsSection() {
+    Vec2 menuPos = {50, 50};
+    float yOffset = 460;
+    
+    overlay->drawText("=== KEYBINDS ===", {menuPos.x + 10, menuPos.y + yOffset}, accentColor, 18.0f);
+    yOffset += 30;
+    
+    overlay->drawText("Menu toggle: END", {menuPos.x + 20, menuPos.y + yOffset}, textColor, 14.0f);
+    yOffset += 22;
+    overlay->drawText("Aimbot key: configurable", {menuPos.x + 20, menuPos.y + yOffset}, textColor, 14.0f);
+    yOffset += 22;
+    overlay->drawText("Invisibility: F6", {menuPos.x + 20, menuPos.y + yOffset}, textColor, 14.0f);
+    yOffset += 22;
+    overlay->drawText("Edit binds in config.ini", {menuPos.x + 20, menuPos.y + yOffset}, disabledColor, 12.0f);
+}
+
+void UIRenderer::renderSecuritySection() {
+    Vec2 menuPos = {50, 50};
+    float yOffset = 460;
+    
+    overlay->drawText("=== SECURITY ===", {menuPos.x + 10, menuPos.y + yOffset}, accentColor, 18.0f);
+    yOffset += 30;
+    
+    overlay->drawText("OBS Bypass: enabled", {menuPos.x + 20, menuPos.y + yOffset}, textColor, 14.0f);
+    yOffset += 22;
+    overlay->drawText("Anti-Debug: enabled", {menuPos.x + 20, menuPos.y + yOffset}, textColor, 14.0f);
+    yOffset += 22;
+    overlay->drawText("Admin detector: active", {menuPos.x + 20, menuPos.y + yOffset}, textColor, 14.0f);
+    yOffset += 22;
+    overlay->drawText("Self-destruct: armed", {menuPos.x + 20, menuPos.y + yOffset}, disabledColor, 14.0f);
+}
+
 void UIRenderer::renderElements() {
     for (auto& element : elements) {
         if (!element.visible) continue;
